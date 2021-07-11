@@ -1,7 +1,15 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
+
 
 import sys
 import math
+import copy
 from umychart_complier_jssymboldata import JSSymbolData, g_JSComplierResource
 from umychart_complier_help import JSComplierHelper ,Variant
 
@@ -44,7 +52,7 @@ class JSAlgorithm() :
         return JSComplierHelper.IsNaN(value)
 
     @staticmethod
-    def CreateArray(count, value=None) :
+    def CreateArray(count, value=JSComplierHelper.NoneNumber) :
         return JSComplierHelper.CreateArray(count,value)
     
     @staticmethod   # 是否是一个有效素组 data!=null and data.length>0
@@ -89,7 +97,7 @@ class JSAlgorithm() :
             len1=len(data)
             len2=len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSAlgorithm.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.Is2Number(data[i],data2[i]) :
                     result[i]=data[i]+data2[i]
@@ -104,8 +112,9 @@ class JSAlgorithm() :
             value=data2
             aryData=data
 
-        result=[None]*len(aryData)
-        for i in range(len(aryData)) :
+        count=len(aryData)
+        result=JSAlgorithm.CreateArray(count)
+        for i in range(count) :
             if JSAlgorithm.Is2Number(aryData[i],value) :
                 result[i]=value+aryData[i]
 
@@ -126,7 +135,7 @@ class JSAlgorithm() :
             len1=len(data)
             len2=len(data2)
             count=max(len1, len2)
-            result=[None]*count
+            result=JSAlgorithm.CreateArray(count)
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.Is2Number(data[i],data2[i]) :
                     result[i]=data[i]-data2[i]
@@ -134,15 +143,15 @@ class JSAlgorithm() :
             return result
 
         if isNumber :   # 单数据-数组
-            result=[None]*len(data2)
-            for i in range(len(data2)) :
-                result[i]=None
+            count=len(data2)
+            result=JSAlgorithm.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data,data2[i]) :
                     result[i]=data-data2[i]
         else :           # 数组-单数据
-            result=[None]*len(data)
-            for i in range(len(data)) :
-                result[i]=None
+            count=len(data)
+            result=JSAlgorithm.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data[i],data2) :
                     result[i]=data[i]-data2
 
@@ -161,7 +170,7 @@ class JSAlgorithm() :
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSAlgorithm.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.Is2Number(data[i],data2[i]) :
                     result[i]=data[i]*data2[i]
@@ -176,8 +185,9 @@ class JSAlgorithm() :
             value=data2
             aryData=data
 
-        result=[None]*len(aryData) # 初始化
-        for i in range(len(aryData)) :
+        count=len(aryData)
+        result=JSAlgorithm.CreateArray(count) # 初始化
+        for i in range(count) :
             if JSAlgorithm.Is2Number(aryData[i],value) :
                 result[i]=value*aryData[i]
 
@@ -198,7 +208,7 @@ class JSAlgorithm() :
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSAlgorithm.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.IsNumber(data[i]) and JSAlgorithm.IsDivideNumber(data2[i]) :
                     result[i]=data[i]/data2[i]
@@ -206,15 +216,15 @@ class JSAlgorithm() :
             return result
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
-                result[i]=None
+            count=len(data2)
+            result=JSAlgorithm.CreateArray(count) # 初始化
+            for i in range(count) :
                 if JSAlgorithm.IsNumber(data) and JSAlgorithm.IsDivideNumber(data2[i]) :
                     result[i]=data/data2[i]
         else : # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
-                result[i]=None
+            count=len(data)
+            result=JSAlgorithm.CreateArray(count) # 初始化
+            for i in range(count) :
                 if JSAlgorithm.IsNumber(data[i]) and JSAlgorithm.IsDivideNumber(data2) :
                     result[i]=data[i]/data2
 
@@ -248,14 +258,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data>data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]>data2 else 0
 
@@ -274,7 +286,7 @@ class JSAlgorithm() :
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i]>=data2[i] else 0
@@ -283,14 +295,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data>=data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]>=data2 else 0
 
@@ -303,13 +317,13 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data<data2 else 0
 
         # 都是数组比较
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i]<data2[i] else 0
@@ -318,14 +332,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data<data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]<data2 else 0
 
@@ -338,13 +354,13 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data<=data2 else 0
 
         # 都是数组比较
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i]<=data2[i] else 0
@@ -353,14 +369,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data<=data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]<=data2 else 0
 
@@ -373,13 +391,13 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data==data2 else 0
 
         # 都是数组比较
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i]==data2[i] else 0
@@ -388,14 +406,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data==data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]==data2 else 0
 
@@ -408,13 +428,13 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data!=data2 else 0
 
         # 都是数组比较
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i]!=data2[i] else 0
@@ -423,14 +443,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data!=data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i]!=data2 else 0
 
@@ -449,14 +471,14 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data and data2 else 0
 
         # 都是数组比较
         result=[]
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i] and data2[i] else 0
@@ -465,14 +487,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data and data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i] and data2 else 0
 
@@ -485,14 +509,14 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  1 if data>=data2 else 0
+            return  1 if data or data2 else 0
 
         # 都是数组比较
         result=[]
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count # 初始化
+            result=JSComplierHelper.CreateArray(count) # 初始化
             for i in range(count) :
                 if i<len1 and i<len2 and not JSAlgorithm.Is2NaN(data[i],data2[i]) :
                     result[i]= 1 if data[i] or data2[i] else 0
@@ -501,14 +525,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2) # 初始化
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data,data2[i]) :
                     result[i]=1 if data or data2[i] else 0
         
         else :           # 数组-单数据
-            result=[None]*len(data) # 初始化
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count) # 初始化
+            for i in range(count) :
                 if not JSAlgorithm.Is2NaN(data[i],data2) :
                     result[i]=1 if data[i] or data2 else 0
 
@@ -532,8 +558,9 @@ class JSAlgorithm() :
             return trueData if data else falseData
         
         # 都是数组
-        result=[None]*len(data)
-        for i in range(len(data)) :
+        count=len(data)
+        result=JSComplierHelper.CreateArray(count)
+        for i in range(count) :
             if data[i] :
                 if isNumber2 :
                     result[i]=trueData
@@ -560,10 +587,56 @@ class JSAlgorithm() :
     #
     #########################################################################
 
+
+    # 引用若干周期前的数据(平滑处理).
+    # 用法:REF(X,A),引用A周期前的X值.A可以是变量.
+    # 平滑处理:当引用不到数据时进行的操作.此函数中,平滑时使用上一个周期的引用值.
+    # 例如:REF(CLOSE,BARSCOUNT(C)-1)表示第二根K线的收盘价.
     def REF(self,data,n) :
         result=[]
         if JSAlgorithm.IsNumber(n) :
             count=len(data)
+            n=int(n)
+            if count<=0 :
+                return result
+            if n>=count :
+                return result
+
+            result=data[0:count-n]
+
+            fristData=data[0]  # 平滑使用第1个数据
+            for i in range(n) :
+                result.insert(0,fristData)
+
+        else :   # n 为数组的情况
+            nCount=len(n)
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(len(data)) :
+                if i>=nCount :
+                    continue
+
+                value=n[i]
+                if (JSAlgorithm.IsNumber(value)) :
+                    value=int(value)
+                    if value>=0 and value<=i :
+                        result[i]=data[i-value]
+                    elif i : 
+                        result[i]=result[i-1]
+                    else :
+                        result[i]=data[i]
+
+        return result
+
+    # 引用若干周期前的数据(未作平滑处理).
+    # 用法: REFV(X,A),引用A周期前的X值.A可以是变量.
+    # 平滑处理:当引用不到数据时进行的操作.
+    # 例如: REFV(CLOSE,BARSCOUNT(C)-1)表示第二根K线的收盘价.
+    def REFV(self,data,n) :
+        result=[]
+        if JSAlgorithm.IsNumber(n) :
+            count=len(data)
+            n=int(n)
             if count<=0 :
                 return result
             if n>=count :
@@ -572,22 +645,98 @@ class JSAlgorithm() :
             result=data[0:count-n]
 
             for i in range(n) :
-                result.insert(0,None)
+                result.insert(0,JSComplierHelper.NoneNumber)
 
         else :   # n 为数组的情况
             nCount=len(n)
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
             for i in range(len(data)) :
-                result[i]=None
+                result[i]=JSComplierHelper.NoneNumber
                 if i>=nCount :
                     continue
 
                 value=n[i]
-                if value>0 and value<=i :
-                    result[i]=data[i-value]
-                elif i : 
-                    result[i]=result[i-1]
-                else :
-                    result[i]=data[i]
+                if (JSAlgorithm.IsNumber(value)) :
+                    value=int(value)
+                    if value>=0 and value<=i :
+                        result[i]=data[i-value]
+
+        return result
+
+    # 属于未来函数,引用若干周期后的数据(平滑处理).
+    # 用法:REFX(X,A),引用A周期后的X值.A可以是变量.
+    # 平滑处理:当引用不到数据时进行的操作.此函数中,平滑时使用上一个周期的引用值.
+    # 例如:  TT:=IF(C>O,1,2);
+    #       REFX(CLOSE,TT);表示阳线引用下一周期的收盘价,阴线引用日后第二周期的收盘价.
+    def REFX(self,data,n) :
+        result=[]
+        if JSAlgorithm.IsNumber(n) :
+            count=len(data)
+            n=int(n)
+            if count<=0 :
+                return result
+            if n>=count :
+                return result
+
+            result=data[n:count]
+            lastData=data[count-1]
+
+            for i in range(n) :
+                result.append(lastData)  # 使用最后一个数据平滑
+
+        else :   # n 为数组的情况
+            nCount=len(n)
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(len(data)) :
+                if i>=nCount :
+                    continue
+
+                value=n[i]
+                if (JSAlgorithm.IsNumber(value)) :
+                    value=int(value)
+                    if value>0 and value+i<count :
+                        result[i]=data[i+value]
+                    elif i : 
+                        result[i]=result[i-1]
+                    else :
+                        result[i]=data[i]
+
+        return result
+
+    # 属于未来函数,引用若干周期后的数据(未作平滑处理).
+    # 用法: REFXV(X,A),引用A周期后的X值.A可以是变量.
+    # 平滑处理:当引用不到数据时进行的操作.
+    # 例如: REFXV(CLOSE,1)表示下一周期的收盘价,在日线上就是明天收盘价
+    def REFXV(self,data,n) :
+        result=[]
+        if JSAlgorithm.IsNumber(n) :
+            count=len(data)
+            n=int(n)
+            if count<=0 :
+                return result
+            if n>=count :
+                return result
+
+            result=data[0:count-n]
+
+            for i in range(n) :
+                result.append(JSComplierHelper.NoneNumber)
+
+        else :   # n 为数组的情况
+            nCount=len(n)
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(len(data)) :
+                if i>=nCount :
+                    continue
+
+                value=n[i]
+                if (JSAlgorithm.IsNumber(value)) :
+                    value=int(value)
+                    if value>=0 and value+i< count:
+                        result[i]=data[i-value]
 
         return result
 
@@ -604,7 +753,7 @@ class JSAlgorithm() :
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count
+            result=JSComplierHelper.CreateArray(count)
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.Is2Number(data[i],data2[i]) :
                     result[i]= max(data[i],data2[i])
@@ -613,14 +762,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2)
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data,data2[i]) :
                     result[i]=max(data,data2[i])
         
         else :           # 数组-单数据
-            result=[None]*len(data)
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data[i],data2) :
                     result[i]=max(data[i],data2)
 
@@ -633,14 +784,14 @@ class JSAlgorithm() :
 
         # 单数值比较
         if isNumber and isNumber2 :
-            return  max(data,data2)
+            return  min(data,data2)
 
         # 都是数组比较
         result=[]
         if not isNumber and not isNumber2 :
             len1, len2 = len(data), len(data2)
             count=max(len1, len2)
-            result=[None]*count
+            result=JSComplierHelper.CreateArray(count)
             for i in range(count) :
                 if i<len1 and i<len2 and JSAlgorithm.Is2Number(data[i],data2[i]) :
                     result[i]= min(data[i],data2[i])
@@ -649,14 +800,16 @@ class JSAlgorithm() :
 
 
         if isNumber :  # 单数据-数组
-            result=[None]*len(data2)
-            for i in range(len(data2)) :
+            count=len(data2)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data,data2[i]) :
                     result[i]=min(data,data2[i])
         
         else :           # 数组-单数据
-            result=[None]*len(data)
-            for i in range(len(data)) :
+            count=len(data)
+            result=JSComplierHelper.CreateArray(count)
+            for i in range(count) :
                 if JSAlgorithm.Is2Number(data[i],data2) :
                     result[i]=min(data[i],data2)
 
@@ -668,15 +821,23 @@ class JSAlgorithm() :
         if isNumber :
             return abs(data)
         
-        result=[None]*len(data)
-        for i in range(len(data)) :
-            result[i]=None
+        count=len(data)
+        result=JSComplierHelper.CreateArray(count)
+        for i in range(count) :
             if not JSAlgorithm.IsNaN(data[i]) :
                  result[i]=abs(data[i])
 
         return result
 
-    def MA(self, data,dayCount) :
+    # 返回简单移动平均
+    # 用法:
+    # MA(X,N):X的N日简单移动平均,算法(X1+X2+X3+...+Xn)/N,N支持变量
+    # N 支持数组
+    def MA(self, data,n) :
+        if (JSAlgorithm.IsArray(n)):
+            return self.MA_ARRAY(data,n)
+
+        dayCount=int(n) 
         if dayCount<=0:
             dayCount=1
         
@@ -684,7 +845,7 @@ class JSAlgorithm() :
         if not data or len(data)<=0:
             return result
         
-        result=[None]*len(data) # 初始化数据
+        result=JSComplierHelper.CreateArray(len(data)) # 初始化数据
         for i in range(len(data)) :
             if JSAlgorithm.IsNumber(data[i]):
                 break
@@ -713,14 +874,50 @@ class JSAlgorithm() :
 
         return result
 
+    # MA N=数组
+    def MA_ARRAY(self,data,n):
+        if not data or len(data)<=0:
+            return []
+
+        dataCount=len(data)
+        result=JSAlgorithm.CreateArray(dataCount)
+        for i in range(len(n)) :
+            period=n[i]
+            if (not JSAlgorithm.IsNumber(period)) :
+                continue
+            period=int(period)
+            if (period<=0):
+                continue
+            sum=0
+            value=0
+            sumCount=0
+            for j in range(period):
+                index=i-j
+                if (index<0):
+                    break
+                value=data[index]
+                if JSAlgorithm.IsNumber(value):
+                    sum+=value
+                sumCount+=1
+            if (sumCount>0):
+                value=sum/sumCount
+                result[i]=value
+
+        return result
+
+
     # 指数平均数指标 EMA(close,10)
-    def EMA(self,data,dayCount) :
+    def EMA(self,data,n) :
+        if (JSAlgorithm.IsArray(n)):
+            return self.EMA_ARRAY(data,n)
+
+        dayCount=int(n)   
         result = []
         offset=0
         if offset>=len(data) :
             return result
 
-        result=[None]*len(data) # 初始化数据
+        result=JSComplierHelper.CreateArray(len(data)) # 初始化数据
 
         # 取首个有效数据
         for i in range(len(data)) :
@@ -737,22 +934,98 @@ class JSAlgorithm() :
             p2Index+=1
 
         return result
+
+    # EMA(N) = 2/(N+1)*C + (N-1)/(N+1)*EMA', EMA'为前一天的ema
+    def EMA_ARRAY(self,data,n):
+        dataCount=len(data)
+        if (dataCount<=0):
+            return []
+
+        result=JSAlgorithm.CreateArray(dataCount)
+        for i in range(len(n)) :
+            period=n[i]
+            if (not JSAlgorithm.IsNumber(period)) :
+                continue
+            period=int(period)
+            if (period<=0) :
+                continue
+            if (period>i+1) :
+                period=i+1
+            ema=None
+            lastEMA=None
+            EMAFactor=[ 2.0/ (period + 1), (period - 1.0) / (period + 1.0)]
+            for j in range(period) :
+                index=i-(period-j-1)
+                value=data[index]
+                if (not JSAlgorithm.IsNumber(value)):
+                    continue
+                if (lastEMA==None):
+                    ema=value
+                    lastEMA=ema
+                else :
+                    ema = EMAFactor[0] * value + EMAFactor[1] * lastEMA
+                    lastEMA=ema
+            if (ema!=None) :
+                result[i]=ema
+
+        return result
  
     # SMA 移动平均
     # 返回移动平均。
-    # 用法：　SMA(X，N，M)　X的M日移动平均，M为权重，如Y=(X*M+Y'*(N-M))/N 
+    # 用法：　SMA(X，N，M)　X的N日移动平均，M为权重，如Y=(X*M+Y'*(N-M))/N 
     def SMA(self,data,n,m) :
-        result = [None]*len(data)
+        if (JSAlgorithm.IsArray(n)) :
+            return self.SMA_ARRAY(data,n,m)
+
+        period=int(n)
+        if (period<=0) :
+            return []
+
+        result = JSComplierHelper.CreateArray(len(data))
         lastData=None
         for i in range(len(data)) :
             if JSAlgorithm.IsNumber(data[i]) :
                 lastData=data[i]
                 result[i]=lastData # 第一天的数据
                 break
-
+        
         for i in range(i+1,len(data)) :
-            result[i]=(m*data[i]+(n-m)*lastData)/n
+            result[i]=(m*data[i]+(period-m)*lastData)/period
             lastData=result[i]
+
+        return result
+
+    def SMA_ARRAY(self,data,n,m) :
+        dataCount=len(data)
+        if (dataCount<=0):
+            return []
+        
+        result=JSAlgorithm.CreateArray(dataCount)
+        for i in range(len(n)):
+            period=n[i]
+            if (not JSAlgorithm.IsNumber(period)) :
+                continue
+            period=int(period)
+            if (period<=0):
+                continue
+            if (period<i+1):
+                period=i+1
+
+            sma=None
+            lastSMA=None
+            for j in range(period) :
+                index=i-(period-j-1)
+                value=data[index]
+                if (not JSAlgorithm.IsNumber(value)):
+                    continue
+                if (lastSMA==None):
+                    sma=value
+                    lastSMA=sma
+                else :
+                    sma=(m*data[i]+(period-m)*lastSMA)/period
+                    lastSMA=sma
+            if (sma!=None):
+                result[i]=sma
 
         return result
 
@@ -767,7 +1040,7 @@ class JSAlgorithm() :
         if len1<0 or len2!=len2 :
             return result
 
-        result = [None]*len(data)
+        result = JSAlgorithm.CreateArray(len(data))
         for index in range(len1) :
             if JSAlgorithm.Is2Number(data[index],data2[index]) :
                 result[index]=data[index]
@@ -785,43 +1058,87 @@ class JSAlgorithm() :
     # 返回加权移动平均
     # 用法:WMA(X,N):X的N日加权移动平均.
     # 算法:Yn=(1*X1+2*X2+...+n*Xn)/(1+2+...+n)
-    def WMA(self,data, dayCount) :
+    def WMA(self,data, n) :
         result=[]
         len1=len(data)
         if not data or len1<=0 :
             return result
-        if dayCount < 1 :
-            dayCount = 1
 
-        result=[None]*len1 # 初始化
-        for i in range(len1) :
-            if JSAlgorithm.IsNumber(data[i]) :
-                break
-        
-        data2 = data[0:]
-        days=-1
-        for i in range(i,len1):
-            days+=1
+        result=JSAlgorithm.CreateArray(len1) # 初始化
 
-            if days < dayCount-1 :
-                continue
+        if (JSAlgorithm.IsArray(n)) :
+            for i in range(len(n)):
+                period=n[i]
+                if (not JSAlgorithm.IsNumber(period)) :
+                    continue
+                period=int(period)
+                if (period<=0):
+                    continue
+                if (period>i+1) :
+                    period=i+1
+
+                start=0
+                preValue=0
+                for j in range(period) :
+                    index=i-(period-j-1)
+                    value=data[index]
+                    start=j
+                    if (JSAlgorithm.IsNumber(value)) :
+                        preValue=value
+                        break
+                
+                if (start>=period) :
+                    continue
+
+                sum, count , k =0, 0, 1
+                for j in range(start, period) :
+                    index=i-(period-j-1)
+                    value=data[index]
+                    if (JSAlgorithm.IsNumber(value)) :
+                        preValue = value
+                    else :
+                        value=preValue
+
+                    count+= k
+                    sum += value * k
+                    k+=1
+
+                result[i] = sum / count
+                    
+        else :
+            dayCount=int(n)
+            if dayCount<=0 :
+                return result
+
+            start=0
+            for i in range(len1) :
+                start=i
+                if JSAlgorithm.IsNumber(data[i]) :
+                    break
             
-            preValue = data2[i - (dayCount-1)]
-            sum = 0
-            count = 0
-            for j in range(dayCount-1,-1,-1) :
-                value = data2[i-j]
-                if JSAlgorithm.IsNumber(value) :
-                    value = preValue
-                    data2[i-j] = value
-                else :
-                    preValue = value
+            data2 = data[0:]
+            days =int(-1)
+            for i in range(start,len1) :
+                days+=1
+                if days < dayCount-1 :
+                    continue
+                
+                preValue = data2[i - (dayCount-1)]
+                sum = 0
+                count = 0
+                for j in range(dayCount-1,-1,-1) :
+                    value = data2[i-j]
+                    if not JSAlgorithm.IsNumber(value) :
+                        value = preValue
+                        data2[i-j] = value
+                    else :
+                        preValue = value
 
-                count += dayCount - j
-                sum += value * (dayCount - j)
+                    count += dayCount - j
+                    sum += value * (dayCount - j)
+                
+                result[i] = sum / count
             
-            result[i] = sum / count
-        
         return result
 
     
@@ -834,7 +1151,7 @@ class JSAlgorithm() :
         if not data or dataLen<=0 :
             return result
 
-        result=[None]*dataLen
+        result=JSAlgorithm.CreateArray(dataLen)
         for i in range(dataLen) :
             if JSAlgorithm.IsNumber(data[i]) :
                 break
@@ -869,7 +1186,7 @@ class JSAlgorithm() :
         if dayCount>=dataLen :
             return result
     
-        result=[None]*dataLen # 初始化
+        result=JSAlgorithm.CreateArray(dataLen) # 初始化
         for i in range(dayCount,dataLen) :      # 获取第1个有效数据
             if JSAlgorithm.IsNumber(data[i]) :
                 result[i]=data[i]
@@ -890,7 +1207,7 @@ class JSAlgorithm() :
         if dayCount>=dataLen : 
             return result
 
-        result=[None]*dataLen # 初始化
+        result=JSAlgorithm.CreateArray(dataLen) # 初始化
         for i in range(dataLen) :
             if JSAlgorithm.IsNumber(data[i]) :
                 break
@@ -928,7 +1245,7 @@ class JSAlgorithm() :
         if len1<=0 or len2<=0: 
             return result
 
-        result=[None]*len1
+        result=JSAlgorithm.CreateArray(len1)
         for start in range(len1) :
             if JSAlgorithm.IsNumber(data[start]) :
                 break
@@ -946,7 +1263,7 @@ class JSAlgorithm() :
                 result[i] = i - j
 
         for i in range(start+1,len1) :
-            if result[i]==None :
+            if result[i]==JSComplierHelper.NoneNumber :
                 result[i] = result[i-1]
         
         return result
@@ -961,7 +1278,7 @@ class JSAlgorithm() :
             return 0-data
 
         count=len(data)
-        result = [None]*count
+        result = JSAlgorithm.CreateArray(count)
         for i in range(count) :
             if JSAlgorithm.IsNumber(data[i]) :
                 result[i]=0-data[i]
@@ -970,16 +1287,34 @@ class JSAlgorithm() :
 
     def COUNT(self, data,n):
         dataLen=len(data)
-        result=[None]*dataLen
+        result=[0]*dataLen # 初始全部是0
 
-        for i in range(dataLen) :
-            count=0
-            for j in range(n) :
-                if i-j<0 :
-                    break
-                if data[i-j] :
-                    count+=1
-            result[i]=count
+        if (JSAlgorithm.IsArray(n)):
+            for i in range(len(n)) :
+                period=n[i]
+                if (not JSAlgorithm.IsNumber(period)):
+                    continue
+                period=int(period)
+                if (period<1) :
+                    period=i+1
+                count=0
+                for j in range(period) :
+                    index=i-j
+                    if (index<0):
+                        break
+                    if data[index] :
+                        count+=1
+                result[i]=count
+        else :
+            n=int(n)
+            for i in range(dataLen) :
+                count=0
+                for j in range(n) :
+                    if i-j<0 :
+                        break
+                    if data[i-j] :
+                        count+=1
+                result[i]=count
         
         return result
 
@@ -1145,7 +1480,7 @@ class JSAlgorithm() :
                 result[index]= 1 if data[index]>data2[index] and data[index-1]<data2[index-1] else 0
 
         elif JSAlgorithm.IsArray(data) and JSAlgorithm.IsNumber(data2):
-            data2=int(data2)
+            # data2=float(data2)
             len1=len(data)
             result=JSAlgorithm.CreateArray(len1,0)
             for index in range(len1) :
@@ -1156,7 +1491,7 @@ class JSAlgorithm() :
                 result[index]= 1 if data[index]>data2 and data[index-1]<data2 else 0
 
         elif JSAlgorithm.IsNumber(data) and JSAlgorithm.IsArray(data2) :
-            data=int(data)
+            # data=float(data)
             len2=len(data2)
             result=JSAlgorithm.CreateArray(len2,0)
             for index in range(len2) :
@@ -1195,30 +1530,56 @@ class JSAlgorithm() :
 
         return result
 
+    # 求总和.
+    # 用法: SUM(X,N),统计N周期中X的总和,N=0则从第一个有效值开始.
+    # 例如: SUM(VOL,0)表示统计从上市第一天以来的成交量总和
+    # N 支持变量数组
     def SUM(self, data,n) :
         if not JSAlgorithm.IsVaildArray(data) :
             return []
 
         dataLen=len(data)   
-        if dataLen<n:
-            return []
-
         result=JSAlgorithm.CreateArray(dataLen)
-        
-        if n==0 :
-            result[0]=data[0]
-            for i in range(1,dataLen) :
-                result[i] = result[i-1]+data[i]
+
+        if (JSAlgorithm.IsArray(n)) :
+            for i in range(len(n)) :
+                period=n[i]
+                if (not JSAlgorithm.IsNumber(period)):
+                    continue
+
+                period=int(period)
+                if (period<1) :
+                    period=i+1
+
+                value=0
+                for j in range(period) :
+                    index=i-j
+                    if index<0 :
+                        break
+                    if (JSAlgorithm.IsNumber(data[i])) :
+                        value+=data[i]
+
+                result[i]=value
 
         else :
-            j=0
-            for i in range(n-1, dataLen) :
-                for k in range(n) :
-                    if k==0:
-                        result[i]=data[k+j]
-                    else :
-                        result[i]+=data[k+j]
-                j+=1
+            n=int(n)
+            if dataLen<n:
+                return []
+
+            if n==0 :
+                result[0]=data[0]
+                for i in range(1,dataLen) :
+                    result[i] = result[i-1]+data[i]
+
+            else :
+                j=0
+                for i in range(n-1, dataLen) :
+                    for k in range(n) :
+                        if k==0:
+                            result[i]=data[k+j]
+                        else :
+                            result[i]+=data[k+j]
+                    j+=1
 
         return result
 
@@ -1536,21 +1897,51 @@ class JSAlgorithm() :
         if not JSAlgorithm.IsVaildArray(data) :
             return []
 
-        dataLen = len(data)
-        result=JSAlgorithm.CreateArray(dataLen)
-        latestID=None # 最新满足条件的数据索引
-        
-        for i in range(dataLen) :
-            value=data[i]
-            if JSAlgorithm.IsNumber(value) and value>0:
-                latestID=i  # 最新满足条件的数据索引
+        if (JSAlgorithm.IsArray(n)) :
+            dataLen = len(data)
+            result=JSAlgorithm.CreateArray(dataLen,0)
+            for i in range(len(n)) :
+                if (i>=dataLen):
+                    break
+                period=n[i]
+                if (not JSAlgorithm.IsNumber(period)) :
+                    continue
+                period=int(period)
+                if (period<=0):
+                    continue
+                if (period>i+1) :
+                    period=i+1
 
-            if latestID!=None and i-latestID<n :
-                result[i]=1
-            else :
-                result[i]=0
+                bFind=False
+                for j in range(period):
+                    index=i-(period-j-1)
+                    value=data[index]
+                    if (JSAlgorithm.IsNumber(value) and value>0):
+                        bFind=True
+                        break
+                if (bFind):
+                    result[i]=1
+                else:
+                    result[i]=0
 
-        return result
+            return result  
+
+        else :
+            dataLen = len(data)
+            result=JSAlgorithm.CreateArray(dataLen)
+            latestID=None # 最新满足条件的数据索引
+            n=int(n)
+            for i in range(dataLen) :
+                value=data[i]
+                if JSAlgorithm.IsNumber(value) and value>0:
+                    latestID=i  # 最新满足条件的数据索引
+
+                if latestID!=None and i-latestID<n :
+                    result[i]=1
+                else :
+                    result[i]=0
+
+            return result
 
     def TFILTER(self, data,data2,n) :
         # TODO: 待完成
@@ -1568,7 +1959,7 @@ class JSAlgorithm() :
         for i in range(dataLen) :
             if data[i] :
                 result[i]=1
-                for j in range(j<n) :
+                for j in range(n) :
                     if j+i+1>=dataLen :
                         break
                     result[j+i+1]=0
@@ -1814,7 +2205,7 @@ class JSAlgorithm() :
                     continue
 
                 if data[i]>data2 :
-                    day+=1
+                    days+=1
                 else :
                     days=0
 
@@ -2226,7 +2617,7 @@ class JSAlgorithm() :
         result[n-1]=low
         nextSar=low
         sip=stockData.Data[0].High
-        af=exValue/100
+        af=step/100
         for i in range(n,dataLen) :
             ysip=sip
             item=stockData.Data[i]
@@ -2367,7 +2758,87 @@ class JSAlgorithm() :
     # 获利盘比例.
     # 用法: WINNER(CLOSE),表示以当前收市价卖出的获利盘比例,例如返回0.1表示10%获利盘;WINNER(10.5)表示10.5元价格的获利盘比例
     # 该函数仅对日线分析周期有效
-    # ！！！！计算比较耗时间
+    def WINNER(self,data,node) :
+        kData=self.SymbolData.Data
+        if (not kData or kData.GetCount()<=0) :
+            return []
+        dataLen=kData.GetCount()
+        aryCapital=self.SymbolData.GetFinanceCacheData(7,node) # 流通股本
+        result=JSAlgorithm.CreateArray(dataLen)
+
+        priceRange=kData.GetMaxMin()
+        dMaxPrice, dMinPrice = priceRange["Max"], priceRange["Min"]
+        if (dMinPrice > 1000 or dMinPrice < 0 or dMaxPrice>1000 or dMinPrice < 0) :
+            self.ThrowUnexpectedNode(node,'WINNER() 历史K线最大最小值错误, 超出(0,1000)范围')
+            
+        lMaxPrice=int(dMaxPrice*100 + 1)
+        lMinPrice=int(dMinPrice*100 - 1)
+        lLow, lHigh, lClose = 0, 0, 0
+        dMaxPrice = lMaxPrice / 100.0
+        dMinPrice = lMinPrice / 100.0
+        lSpeed = lMaxPrice - lMinPrice + 1
+        if (lSpeed < 1) :
+            return result
+
+        aryVolPrice=JSAlgorithm.CreateArray(lSpeed,0)
+        aryPerVol=JSAlgorithm.CreateArray(lSpeed,0)
+
+        dHSL, dTotalVol, dVol = 0, 0, 0
+        for i in range(dataLen) :
+            if (i >= len(aryCapital)) :
+                continue
+            if (aryCapital[i]<1):
+                continue
+
+            kItem=kData.GetItem(i)
+            dHSL = kItem.Vol/aryCapital[i]
+
+            for j in range(lSpeed) :
+                aryVolPrice[j]*=(1-dHSL)
+
+            lLow=int(min(lMaxPrice,max(lMinPrice,kItem.Low *100)))-lMinPrice
+            lHigh=int(min(lMaxPrice,max(lMinPrice,kItem.High*100)))-lMinPrice
+            lClose=int(min(lMaxPrice,max(lMinPrice,kItem.Close*100)))-lMinPrice
+
+            for j in range(lSpeed) :
+                aryPerVol[j]=0
+
+            lHalf =int((lLow + lHigh + 2 * lClose) / 4)
+            if (lHalf == lHigh or lHalf == lLow) :
+                aryPerVol[lHalf] += kItem.Vol
+            else :
+                dVH = kItem.Vol / (lHalf - lLow)
+                for k in range(lLow,lHalf) :
+                    aryPerVol[k] += (k - lLow)*(dVH / (lHalf - lLow))
+                for k in range(lHalf,lHigh+1) :
+                    aryPerVol[k] += (k - lHigh)*(dVH / (lHalf - lHigh))
+
+            dTotalVol = 0
+            for j in range(lLow,lHigh+1) :
+                aryVolPrice[j] += aryPerVol[j]
+
+            for j in range(lSpeed) :
+                dTotalVol += aryVolPrice[j]
+
+            if isinstance(data,list):
+                lHigh = int(min((data[i] * 100) - lMinPrice, lSpeed - 1))
+            else :
+                lHigh = int(min((data * 100) - lMinPrice, lSpeed - 1))
+
+            dVol=0
+            for j in range(lHigh+1) :
+                dVol += aryVolPrice[j]
+
+            if (dTotalVol > 0) :
+                result[i]=dVol / dTotalVol
+            elif (i - 1 >= 0) :
+                result[i] = result[i - 1]
+        
+        return result
+
+        
+    
+    '''
     def WINNER(self,data,node) :
         exchangeID=201
         exchangeData=self.SymbolData.GetFinanceCacheData(exchangeID,node)    # 换手率
@@ -2425,10 +2896,89 @@ class JSAlgorithm() :
                 result[i]=vol/totalVol
 
         return result
+    '''
 
     # 成本分布情况.
     # 用法: COST(10),表示10%获利盘的价格是多少,即有10%的持仓量在该价格以下,其余90%在该价格以上,为套牢盘
     # 该函数仅对日线分析周期有效
+    def COST(self,data, node) :
+        rate=data/100
+        if (rate<0.000001 or rate>1) :
+            return []
+
+        kData=self.SymbolData.Data
+        if (not kData or kData.GetCount()<=0) :
+            return []
+        dataLen=kData.GetCount()
+        aryCapital=self.SymbolData.GetFinanceCacheData(7,node) # 流通股本
+        result=JSAlgorithm.CreateArray(dataLen)
+
+        priceRange=kData.GetMaxMin()
+        dMaxPrice, dMinPrice = priceRange["Max"], priceRange["Min"]
+        if (dMinPrice > 1000 or dMinPrice < 0 or dMaxPrice>1000 or dMinPrice < 0) :
+            self.ThrowUnexpectedNode(node,'WINNER() 历史K线最大最小值错误, 超出(0,1000)范围')
+            
+        lMaxPrice=int(dMaxPrice*100 + 1)
+        lMinPrice=int(dMinPrice*100 - 1)
+        lLow, lHigh, lClose = 0, 0, 0
+        dMaxPrice = lMaxPrice / 100.0
+        dMinPrice = lMinPrice / 100.0
+        lSpeed = lMaxPrice - lMinPrice + 1
+        if (lSpeed < 1) :
+            return result
+
+        aryVolPrice=JSAlgorithm.CreateArray(lSpeed,0)
+        aryPerVol=JSAlgorithm.CreateArray(lSpeed,0)
+
+        dHSL, dTotalVol, dVol, dCost = 0, 0, 0,0
+        for i in range(dataLen) :
+            if (i >= len(aryCapital)) :
+                continue
+
+            if (aryCapital[i]>1):
+                kItem=kData.GetItem(i)
+                dHSL = kItem.Vol/aryCapital[i]
+
+                for j in range(lSpeed) :
+                    aryVolPrice[j]*=(1-dHSL)
+
+                lLow=int(min(lMaxPrice,max(lMinPrice,kItem.Low *100)))-lMinPrice
+                lHigh=int(min(lMaxPrice,max(lMinPrice,kItem.High*100)))-lMinPrice
+                lClose=int(min(lMaxPrice,max(lMinPrice,kItem.Close*100)))-lMinPrice
+
+                for j in range(lSpeed) :
+                    aryPerVol[j]=0
+
+                lHalf =int((lLow + lHigh + 2 * lClose) / 4)
+                if (lHalf == lHigh or lHalf == lLow) :
+                    aryPerVol[lHalf] += kItem.Vol
+                else :
+                    dVH = kItem.Vol / (lHalf - lLow)
+                    for k in range(lLow,lHalf) :
+                        aryPerVol[k] += (k - lLow)*(dVH / (lHalf - lLow))
+                    for k in range(lHalf,lHigh+1) :
+                        aryPerVol[k] += (k - lHigh)*(dVH / (lHalf - lHigh))
+
+                dTotalVol = 0
+                for j in range(lLow,lHigh+1) :
+                    aryVolPrice[j] += aryPerVol[j]
+
+                for j in range(lSpeed) :
+                    dTotalVol += aryVolPrice[j]
+
+                dCost, dVol = 0,0
+                for j in range(lSpeed) :
+                    dVol+=aryVolPrice[j]
+                    if (dVol>=dTotalVol*rate) :
+                        dCost=(dMaxPrice-dMinPrice)*j/lSpeed+dMinPrice
+                        break
+
+            result[i]=dCost
+
+        return result
+
+
+    '''
     def COST(self,data, node) :
         exchangeID=201
         exchangeData=self.SymbolData.GetFinanceCacheData(exchangeID,node)    # 换手率
@@ -2492,14 +3042,152 @@ class JSAlgorithm() :
                     break
 
         return result
+    '''
 
+    # 远期成本分布比例.
+    # 用法: PPART(10),表示10前的成本占总成本的比例,0.2表示20%
+    def PPART(self, n, node) :
+        startDay=int(n)
+        if (startDay<0):
+            return []
+
+        kData=self.SymbolData.Data
+        if (not kData or kData.GetCount()<=0) :
+            return []
+
+        dataLen=kData.GetCount()
+        aryCapital=self.SymbolData.GetFinanceCacheData(7,node) # 流通股本
+        result=JSAlgorithm.CreateArray(dataLen)    
+        
+        for i in range(startDay, dataLen) :
+            start = i - startDay
+            if (start < 0) :
+                continue
+            
+            #前n日成交量和
+            partVol = 0
+            for j in range(startDay) :	
+                kItem=kData.GetItem(j + start)
+                partVol += kItem.Vol
+            
+            if i < len(aryCapital) :
+                if (aryCapital[i]>0) :
+                    value=1 - (partVol / aryCapital[i])
+                    result[i]=value
+
+        return result
     
+    # 区间成本.
+    # 用法: 例如COSTEX(CLOSE,REF(CLOSE,1)),表示近两日收盘价格间筹码的成本
+    # 该函数仅对日线分析周期有效
+    def COSTEX(self,data, data2, node):
+        kData=self.SymbolData.Data
+        if (not kData or kData.GetCount()<=0) :
+            return []
+        dataLen=kData.GetCount()
+        aryCapital=self.SymbolData.GetFinanceCacheData(7,node) # 流通股本
+        result=JSAlgorithm.CreateArray(dataLen)
+
+        priceRange=kData.GetMaxMin()
+        dMaxPrice, dMinPrice = priceRange["Max"], priceRange["Min"]
+        if (dMinPrice > 1000 or dMinPrice < 0 or dMaxPrice>1000 or dMinPrice < 0) :
+            self.ThrowUnexpectedNode(node,'COSTEX() 历史K线最大最小值错误, 超出(0,1000)范围')
+            
+        lMaxPrice=int(dMaxPrice*100 + 1)
+        lMinPrice=int(dMinPrice*100 - 1)
+        lLow, lHigh, lClose = 0, 0, 0
+        dMaxPrice = lMaxPrice / 100.0
+        dMinPrice = lMinPrice / 100.0
+        lSpeed = lMaxPrice - lMinPrice + 1
+        if (lSpeed < 1) :
+            return result
+
+        aryVolPrice=JSAlgorithm.CreateArray(lSpeed,0)
+        aryPerVol=JSAlgorithm.CreateArray(lSpeed,0)
+
+        dHSL, dTotalVol, dVol, dVola, dPerVola, dVolb, dPerVolb = 0, 0, 0, 0, 0, 0, 0
+        for i in range(dataLen) :
+            if (i >= len(aryCapital)) :
+                continue
+
+            if (aryCapital[i]>1):
+                kItem=kData.GetItem(i)
+                dHSL = kItem.Vol/aryCapital[i]
+
+                for j in range(lSpeed) :
+                    aryVolPrice[j]*=(1-dHSL)
+
+                lLow=int(min(lMaxPrice,max(lMinPrice,kItem.Low *100)))-lMinPrice
+                lHigh=int(min(lMaxPrice,max(lMinPrice,kItem.High*100)))-lMinPrice
+                lClose=int(min(lMaxPrice,max(lMinPrice,kItem.Close*100)))-lMinPrice
+
+                for j in range(lSpeed) :
+                    aryPerVol[j]=0
+
+                lHalf =int((lLow + lHigh + 2 * lClose) / 4)
+                if (lHalf == lHigh or lHalf == lLow) :
+                    aryPerVol[lHalf] += kItem.Vol
+                else :
+                    dVH = kItem.Vol / (lHalf - lLow)
+                    for k in range(lLow,lHalf) :
+                        aryPerVol[k] += (k - lLow)*(dVH / (lHalf - lLow))
+                    for k in range(lHalf,lHigh+1) :
+                        aryPerVol[k] += (k - lHigh)*(dVH / (lHalf - lHigh))
+
+                dTotalVol = 0
+                for j in range(lLow,lHigh+1) :
+                    aryVolPrice[j] += aryPerVol[j]
+
+                for j in range(lSpeed) :
+                    dTotalVol += aryVolPrice[j]
+
+                if isinstance(data,list):
+                    if (data[i]==None) :
+                        continue
+                    lHigh = int(min((data[i] * 100) - lMinPrice, lSpeed - 1))
+                else :
+                    lHigh = int(min((data * 100) - lMinPrice, lSpeed - 1))
+
+                dVola, dPerVola = 0,0
+                for j in range(lHigh+1):
+                    dVola += aryVolPrice[j]
+                    dPerVola += (0.01*(j + lMinPrice))*aryVolPrice[j]
+
+                if isinstance(data2,list) :
+                    if (data2[i]==None):
+                        continue
+                    lHigh = int(min((data2[i] * 100) - lMinPrice, lSpeed - 1))
+                else :
+                    lHigh = int(min((data2 * 100) - lMinPrice, lSpeed - 1))
+
+                dVolb, dPerVolb = 0, 0
+                for j in range(lHigh+1) :
+                    dVolb += aryVolPrice[j]
+                    dPerVolb += (0.01*(j + lMinPrice))*aryVolPrice[j]
+                
+                dVol = dVola - dVolb
+                dPerVolRange = dPerVola - dPerVolb
+                if abs(dPerVolRange)>0.001 and dVol!=0 :
+                    result[i]=dPerVolRange / dVol
+                elif (i-1>=0) :
+                    result[i] = result[i - 1]
+           
+        return result
+
+    # 近期获利盘比例.
+    # 用法: LWINNER(5,CLOSE),表示最近5天的那部分成本以当前收市价卖出的获利盘比例
+    # 例如: 返回0.1表示10%获利盘
+    def LWINNER(self, n, data, node) :
+        return []
+
+    def PWINNER(self, n, data, node) :
+        return []
+
     # 属于未来函数,之字转向.
     # 用法: ZIG(K,N),当价格变化量超过N%时转向,K表示0:开盘价,1:最高价,2:最低价,3:收盘价,其余:数组信息
     # 例如: ZIG(3,5)表示收盘价的5%的ZIG转向
     def ZIG(self,data,n) :
         hisData=self.SymbolData.Data
-        result=[]
         if JSComplierHelper.IsNumber(data):
             if data==0 :
                 data=hisData.GetOpen()
@@ -2512,97 +3200,234 @@ class JSAlgorithm() :
             else :
                 return []
         
-        bFirstPoint=False
-        bSecondPont=False
-        firstData, secondData, thridData = Variant(), Variant(), Variant()
-        lastData=Variant()
-        dataLen=len(data)
-        result=JSComplierHelper.CreateArray(dataLen)
-        for i in range(dataLen) :
-            item=data[i]
-            if not JSComplierHelper.IsNumber(item) :
-                continue
+        return self.ZIG_Calculate(data,n)
 
-            if bFirstPoint==False :
-                bFirstPoint=True
-                firstData.ID=i  # 第1个点
-                firstData.Value=item   
-            elif bFirstPoint==True and bSecondPont==False :
-                temp=(item-firstData.Value)/firstData.Value*100
-                if temp>n :
-                    secondData.ID, secondData.Value, secondData.Up= i, item, True
-                    lastData.ID, lastData.Value=i, item
-                    bSecondPont=True
-                elif temp<-n :
-                    secondData.ID, secondData.Value, secondData.Up =i, item, False
-                    lastData.ID, lastData.Value=i, item
-                    bSecondPont=True
-            elif bFirstPoint==True and bSecondPont==True :
-                temp=(item-lastData.Value)/lastData.Value*100
-                if secondData.Up==True :    # 找下跌的点
-                    if temp<-n :
-                        thridData.ID, thridData.Value, thridData.Up =i, item, False
-                        JSComplierHelper.CalculateZIGLine(firstData,secondData,thridData,data,result)
-                        lastData.ID, lastData.Value =i, item
-                    else :
-                        if item>lastData.Value :
-                            lastData.ID, lastData.Value = i, item
+    # 获取第1个有效数据索引
+    def GetFirstVaildIndex(self, data):
+        count=len(data)
+        for i in range(count):
+            if (JSComplierHelper.IsNumber(data[i])):
+                return i
+        
+        return count
+
+    def ZIG_Calculate(self, data,dRate):
+        nDataCount=len(data)
+        dest=JSAlgorithm.CreateArray(nDataCount)
+        m=self.GetFirstVaildIndex(data)
+        i, lLastPos, lState, j = 0, 0, 0, 0
+        dif = 0
+        lLastPos, lState = m, m
+        for i in range(m+1, nDataCount-1) :
+            if (lState==m):
+                break
+            if abs(data[i] - data[m]) * 100 >= dRate*data[m]:
+                if (data[i]>data[m]) :
+                    lState=i
                 else :
-                    if temp>n :
-                        thridData.ID, thridData.Value,thridData.Up  = i, item, True
-                        JSComplierHelper.CalculateZIGLine(firstData,secondData,thridData,data,result)
-                        lastData.ID, lastData.Value = i, item
+                    lState=-1
+            else :
+                lState=m
+        
+        for i in range(i, nDataCount-1) :
+            if (data[i] >= data[i - 1] and data[i] >= data[i + 1]) :
+                if (lState<0) :
+                    if ((data[i] - data[-lState]) * 100<dRate*data[-lState]) :
+                        continue
                     else :
-                        if item<lastData.Value :
-                            lastData.ID, lastData.Value =i, item
+                        j = -lState
+                        dif = (data[lLastPos] - data[j]) / (-lState - lLastPos)
+                        dest[j]=data[-lState]
+                        j-=1
+                        for j in range(j,lLastPos-1,-1):    # for (; j >= lLastPos; j--)
+                            dest[j]=data[-lState] + (-lState - j)*dif
+                        lLastPos = -lState
+                        lState = i
+                
+                elif (data[i]>data[lState]):
+                    lState = i
+            elif (data[i] <= data[i - 1] and data[i] <= data[i + 1]) :
+                if (lState>0) :
+                    if ((data[lState] - data[i]) * 100<dRate*data[lState]):
+                        continue
+                    else :
+                        j = lLastPos
+                        dif = (data[lState] - data[j]) / (lState - lLastPos)
+                        dest[j]=data[lLastPos]
+                        j+=1
+                        for j in range(j,lState+1) :
+                            dest[j]=data[lLastPos] + (j - lLastPos)*dif
+                        lLastPos = lState
+                        lState = -i
+                elif (data[i]<data[-lState]) :
+                    lState = -i
 
-        # 计算最后1组数据
-        thridData.ID=data.length-1,
-        thridData.Value=data[data.length-1], 
-        thridData.Up=not secondData.Up
-        JSComplierHelper.CalculateZIGLine(firstData,secondData,thridData,data,result)
-       
-        return result
+        if (abs(lState) >= nDataCount - 2) :
+            if (lState>0 and data[nDataCount - 1] >= data[lState]) :
+                lState = nDataCount - 1
+            if (lState<0 and data[nDataCount - 1] <= data[-lState]) :
+                lState = 1 - nDataCount
 
+        if (lState>0) :
+            j = lLastPos
+            dif = (data[lState] - data[j]) / (lState - lLastPos )
+            dest[j]=data[lLastPos]
+            j+=1
+            for j in range(j, lState+1) :
+                dest[j]=data[lLastPos] + (j - lLastPos)*dif
+        else :
+            j = -lState
+            dif = (data[lLastPos] - data[j]) / (-lState - lLastPos)
+            dest[j]=data[-lState]
+            j-=1
+            for j in range(j,lLastPos-1,-1) : # for (; j >= lLastPos; j--)
+                dest[j]=(data[-lState] + (-lState - j)*dif)
+        
+        lState = abs(lState)
+        if (lState<nDataCount - 1) :
+            if (data[nDataCount - 1] >= data[lState]) :
+                j = lState
+                dif = (data[nDataCount - 1] - data[j]) / (nDataCount - lState)
+                dest[j]=(data[lState])
+                j+=1
+                for j in range(j, nDataCount):
+                    dest[j]=(data[lState] + (j - lState)*dif)
+            else :
+                j = nDataCount - 1
+                dif = (data[lState] - data[j]) / (nDataCount - lState)
+                dest[j]=(data[nDataCount - 1])
+                j-=1
+                for j in range(j, lState-1, -1) : #for (; j >= lState; j--)
+                    dest[j]=(data[nDataCount - 1] + (nDataCount - j)*dif)
+
+        return dest
+
+    # 属于未来函数,前M个ZIG转向波谷值.
+    # 用法: TROUGH(K,N,M)表示之字转向ZIG(K,N)的前M个波谷的数值,M必须大于等于1
+    # 例如: TROUGH(2,5,2)表示%5最低价ZIG转向的前2个波谷的数值
+    def TROUGH(self,data,n,n2):
+        zigData=self.ZIG(data,n)   # 计算ZIG
+        lEnd=n2
+        if (lEnd<1) :
+            return []
+
+        nDataCount = len(zigData)
+        dest=JSAlgorithm.CreateArray(nDataCount)
+        trough = JSAlgorithm.CreateArray(lEnd,0)
+        lFlag = 0
+        i = self.GetFirstVaildIndex(zigData) + 1
+        lEnd-=1
+        while i<nDataCount and zigData[i]>zigData[i - 1] :
+            i+=1
+        
+        while i<nDataCount and zigData[i]<zigData[i - 1] :
+            i+=1
+
+        i-=1
+        trough[0] = i
+        for i in range(i, nDataCount - 1) :
+            if (zigData[i]<zigData[i + 1]) :
+                if (lFlag) :
+                    if (lEnd) :
+                        tempTrough=copy.deepcopy(trough)
+                        for j in range(lEnd) :
+                            trough[j+1]=tempTrough[j]
+                    lFlag = 0
+                    trough[lFlag] = i
+            else :
+                lFlag = 1
+            if (trough[lEnd]):
+                 dest[i]=zigData[trough[lEnd]]
+
+        if (trough[lEnd]) :
+            dest[i]=zigData[trough[lEnd]]
+
+        return dest
 
     # 属于未来函数,前M个ZIG转向波谷到当前距离.
     # 用法: TROUGHBARS(K,N,M)表示之字转向ZIG(K,N)的前M个波谷到当前的周期数,M必须大于等于1
     # 例如: TROUGHBARS(2,5,2)表示%5最低价ZIG转向的前2个波谷到当前的周期数
     def TROUGHBARS(self,data,n,n2) :
-        zigData=self.ZIG(data,n)  # 计算ZIG
-        zigDataLen=len(zigData)
-        dataLen=len(data)
-        result=JSComplierHelper.CreateArray(dataLen)
+        zigData=self.ZIG(data,n)   # 计算ZIG
+        lEnd=n2
+        if (lEnd<1) :
+            return []
 
-        for i in range(len(zigDataLen)) :
-            if JSComplierHelper.IsNumber(zigData[i]) :
-                break
+        nDataCount = len(zigData)
+        dest=JSAlgorithm.CreateArray(nDataCount)
+        trough = JSAlgorithm.CreateArray(lEnd,0)
+        lFlag = 0
+        i = self.GetFirstVaildIndex(zigData) + 1
+        lEnd-=1
+        while i<nDataCount and zigData[i]>zigData[i - 1] :
+            i+=1
+        
+        while i<nDataCount and zigData[i]<zigData[i - 1] :
+            i+=1
 
-        trough=JSComplierHelper.CreateArray(dataLen)
-        start=i
-        for i in range(i,zigDataLen ) :  # 第1个波谷
-            if (i+1<zigDataLen and i-1>=0 and  zigData[i]<zigData[i-1] and zigData[i]<zigData[i+1]) : #波谷
-                trough[0]=i
-                break
-
-        j=0
-        for i in range(i+1,zigDataLen) :
-            if (i+1<zigDataLen and i-1>=0 and  zigData[i]<zigData[i-1] and zigData[i]<zigData[i+1]) : # 波谷
-                # console.log('[TROUGHBARS] i',i,zigData[i]);
-                j+=1
-                trough[j]=i
-                if j+1==n2 :
-                    result[i]=i-start
-                elif j+1>n2 :
-                    trough.pop(0) # 大于计算的波谷数,去掉第1个波谷
-                    start=trough[0]
-                    j-=1
-                    result[i]=i-start
+        i-=1
+        trough[0] = i
+        for i in range(i, nDataCount - 1) :
+            if (zigData[i]<zigData[i + 1]) :
+                if (lFlag) :
+                    if (lEnd) :
+                        tempTrough=copy.deepcopy(trough)
+                        for j in range(lEnd) :
+                            trough[j+1]=tempTrough[j]
+                    lFlag = 0
+                    trough[lFlag] = i
             else :
-                if j+1==n2 :
-                    result[i]=i-start
+                lFlag = 1
+            if (trough[lEnd]) :
+                dest[i]=(i - trough[lEnd])
 
-        return result
+        if (trough[lEnd]) :
+            dest[i]=(i - trough[lEnd])
+
+        return dest
+
+
+    # 属于未来函数,前M个ZIG转向波峰值.
+    #用法: PEAK(K,N,M)表示之字转向ZIG(K,N)的前M个波峰的数值,M必须大于等于1
+    # 例如: PEAK(1,5,1)表示%5最高价ZIG转向的上一个波峰的数值
+    def PEAK(self, data,n,n2) :
+        zigData=self.ZIG(data,n)   # 计算ZIG
+        lEnd=n2
+        if (lEnd<1) :
+            return []
+
+        nDataCount = len(zigData)
+        dest=JSAlgorithm.CreateArray(nDataCount)
+        trough = JSAlgorithm.CreateArray(lEnd,0)
+        lFlag = 0
+        i = self.GetFirstVaildIndex(zigData) + 1
+        lEnd-=1
+        while i<nDataCount and zigData[i]>zigData[i - 1] :
+            i+=1
+        
+        while i<nDataCount and zigData[i]<zigData[i - 1] :
+            i+=1
+
+        i-=1
+        trough[0] = i
+        for i in range(i, nDataCount - 1) :
+            if (zigData[i]<zigData[i + 1]) :
+                if (lFlag) :
+                    if (lEnd) :
+                        tempTrough=copy.deepcopy(trough)
+                        for j in range(lEnd) :
+                            trough[j+1]=tempTrough[j]
+                    lFlag = 0
+                    trough[lFlag] = i
+            else :
+                lFlag = 1
+            if(trough[lEnd]) :
+                dest[i]=zigData[trough[lEnd]]
+
+        if (trough[lEnd]) :
+            dest[i]=zigData[trough[lEnd]]
+
+        return dest
 
 
     # 属于未来函数,前M个ZIG转向波峰到当前距离.
@@ -2611,39 +3436,42 @@ class JSAlgorithm() :
     # 例如: PEAKBARS(0,5,1)表示%5开盘价ZIG转向的上一个波峰到当前的周期数
     def PEAKBARS(self, data,n,n2) :
         zigData=self.ZIG(data,n)   # 计算ZIG
-        zigDataLen=len(zigData)
-        dataLen=len(data)
-        result=JSComplierHelper.CreateArray(dataLen)
+        lEnd=n2
+        if (lEnd<1) :
+            return []
 
-        for i in range(len(zigDataLen)) :
-            if JSComplierHelper.IsNumber(zigData[i]) :
-                break
+        nDataCount = len(zigData)
+        dest=JSAlgorithm.CreateArray(nDataCount)
+        trough = JSAlgorithm.CreateArray(lEnd,0)
+        lFlag = 0
+        i = self.GetFirstVaildIndex(zigData) + 1
+        lEnd-=1
+        while i<nDataCount and zigData[i]>zigData[i - 1] :
+            i+=1
+        
+        while i<nDataCount and zigData[i]<zigData[i - 1] :
+            i+=1
 
-        trough=JSComplierHelper.CreateArray(dataLen)
-        start=i
-        for i in range(i, zigDataLen) : # 第1个波峰
-            if (i+1<zigDataLen and i-1>=0 and zigData[i]>zigData[i-1] and zigData[i]>zigData[i+1]) : # 波峰
-                trough[0]=i
-                break
-
-        j=0
-        for i in range(i+1, zigDataLen) :
-            if (i+1<zigDataLen and i-1>=0 and  zigData[i]>zigData[i-1] and zigData[i]>zigData[i+1]) : # 波峰
-                # console.log('[TROUGHBARS] i',i,zigData[i]);
-                j+=1
-                trough[j]=i
-                if j+1==n2 :
-                    result[i]=i-start
-                elif j+1>n2 :
-                    trough.pop(0) # 大于计算的波谷数,去掉第1个波谷
-                    start=trough[0]
-                    j-=1
-                    result[i]=i-start
+        i-=1
+        trough[0] = i
+        for i in range(i, nDataCount - 1) :
+            if (zigData[i]<zigData[i + 1]) :
+                if (lFlag) :
+                    if (lEnd) :
+                        tempTrough=copy.deepcopy(trough)
+                        for j in range(lEnd) :
+                            trough[j+1]=tempTrough[j]
+                    lFlag = 0
+                    trough[lFlag] = i
             else :
-                if j+1==n2 : 
-                    result[i]=i-start
+                lFlag = 1
+            if(trough[lEnd]) :
+                dest[i]=dest[i]=(i - trough[lEnd])
 
-        return result
+        if (trough[lEnd]) :
+            dest[i]=(i - trough[lEnd])
+
+        return dest
 
 
 
@@ -2654,15 +3482,21 @@ class JSAlgorithm() :
         elif name=='MIN':
             return self.MIN(args[0], args[1])
         elif name=='REF':
-            return self.REF(args[0], int(args[1]))
+            return self.REF(args[0], args[1])
+        elif name=='REFV':
+            return self.REFV(args[0], args[1])
+        elif name=='REFX':
+            return self.REFX(args[0], args[1])
+        elif name=='REFXV':
+            return self.REFXV(args[0], args[1])
         elif name=='ABS':
             return self.ABS(args[0])
         elif name=='MA':
-            return self.MA(args[0], int(args[1]))
+            return self.MA(args[0], args[1])
         elif name=="EMA":
-            return self.EMA(args[0], int(args[1]))
+            return self.EMA(args[0], args[1])
         elif name=="SMA":
-            return self.SMA(args[0], int(args[1]),int(args[2]))
+            return self.SMA(args[0], args[1],args[2])
         elif name=="DMA":
             return self.DMA(args[0], args[1])
         elif name=='EXPMA':
@@ -2670,7 +3504,7 @@ class JSAlgorithm() :
         elif name=='EXPMEMA':
             return self.EXPMEMA(args[0], int(args[1]))
         elif name=='COUNT':
-            return self.COUNT(args[0], int(args[1]))
+            return self.COUNT(args[0], args[1])
         elif name=='LLV':
             return self.LLV(args[0], args[1])
         elif name=='LLVBARS':
@@ -2696,15 +3530,15 @@ class JSAlgorithm() :
         elif name=='NOT':
             return self.NOT(args[0])
         elif name=='SUM':
-            return self.SUM(args[0], int(args[1]))
+            return self.SUM(args[0], args[1])
         elif name=='RANGE':
             return self.RANGE(args[0],args[1],args[2])
         elif name=='EXIST':
-            return self.EXIST(args[0],int(args[1]))
+            return self.EXIST(args[0],args[1])
         elif name=='EXISTR':
             return self.EXISTR(args[0],int(args[1]),int(args[2]))
         elif name=='FILTER':
-            return self.FILTER(args[0],args[1])
+            return self.FILTER(args[0],int(args[1]))
         elif name=='TFILTER':
             return self.TFILTER(args[0],args[1],int(args[2]))
         elif name=='SLOPE':
@@ -2725,14 +3559,26 @@ class JSAlgorithm() :
             return self.DEVSQ(args[0], int(args[1]))
         elif name=='ZIG':
             return self.ZIG(args[0],args[1])
+        elif name=='TROUGH':
+            return self.TROUGH(args[0],args[1],int(args[2]))
         elif name=='TROUGHBARS':
             return self.TROUGHBARS(args[0],args[1],int(args[2]))
+        elif name=='PEAK':
+            return self.PEAK(args[0],args[1],int(args[2]))
         elif name=='PEAKBARS':
             return self.PEAKBARS(args[0],args[1],int(args[2]))
         elif name=='COST':
             return self.COST(args[0],node)
         elif name=='WINNER':
             return self.WINNER(args[0],node)
+        elif name=='PPART':
+            return self.PPART(args[0],node)
+        elif name=='COSTEX':
+            return self.COSTEX(args[0],args[1],node)
+        elif name=='LWINNER':
+            return self.LWINNER(args[0],args[1],node)
+        elif name=='PWINNER':
+            return self.PWINNER(args[0],args[1],node)
         elif name=='FORCAST':
             return self.FORCAST(args[0], int(args[1]))
         elif name=='STDP':
@@ -2756,7 +3602,7 @@ class JSAlgorithm() :
         elif name=='BETA2':
             return self.BETA2(args[0],args[1],int(args[2]))
         elif name=='WMA':
-            return self.WMA(args[0], int(args[1]))
+            return self.WMA(args[0], args[1])
         elif name=='MEMA':
             return self.MEMA(args[0], int(args[1]))
         elif name=='SUMBARS':

@@ -1,5 +1,5 @@
 <template>
-    <div class="tradeinfo" ref="tradeinfo">
+    <div class="tradeinfo" ref="tradeinfo" :class='{blackStyle: isBlackStyle}'>
         <div class="firstLine" ref="bookWrap">
             <p>
                 <span>
@@ -407,7 +407,8 @@ export default {
 
   name: "StockTradeInfo",
   props: [
-    "IsShareStock" //是否共享使用一个Stock类,
+    "IsShareStock", //是否共享使用一个Stock类,
+    "DefaultSymbol"
   ],
 
   data() {
@@ -459,7 +460,9 @@ export default {
         JSStock: null //数据请求控制器
       },
       DealPriceData:DefaultData.GetDealPriceData(),
-      MoreDealLink:''
+      MoreDealLink:'',
+
+      isBlackStyle: false
     };
 
     return data;
@@ -478,8 +481,10 @@ export default {
       this.InitalStock();
       this.JSStock.RequestData();
 
-      this.MoreDealLink = './stockdeallastest.demo.page.html?symbol=' + this.Symbol;
+      // this.MoreDealLink = './stockdeallastest.demo.page.html?symbol=' + this.Symbol;
     }
+
+    this.MoreDealLink = './stockdeallastest.demo.page.html?symbol=' + this.Symbol;
 
     this.OnSize();
   },
@@ -553,6 +558,10 @@ export default {
     //设置外部共享的股票数据类
     SetJSStock: function(jsStock) {
       this.JSStock = jsStock;
+    },
+
+    ChangeStyle(styleName){
+      this.isBlackStyle = 'black' === styleName;
     },
 
     //窗口变化UI自适应调整
@@ -1066,8 +1075,8 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-$border: 1px solid #e1ecf2;
+<style lang="less" scoped>
+@border: 1px solid #e1ecf2;
 
 html,
 body,
@@ -1107,14 +1116,14 @@ ul {
 }
 
 .tradeinfo {
-  border: $border;
+  border: @border;
   width: 100%;
   height: 100%;
   position: relative;
 
   .firstLine {
     width: 100%;
-    border-bottom: $border;
+    border-bottom: @border;
     padding-left: 10px;
     display: flex;
     flex-direction: row;
@@ -1131,7 +1140,7 @@ ul {
   .sellFive,
   .detailList,
   .shorttermlist {
-    border-bottom: $border;
+    border-bottom: @border;
     padding: 0 10px;
     display: flex;
     flex-direction: row;
@@ -1186,10 +1195,10 @@ ul {
       width: 100%;
       display: flex;
       flex-direction: row;
-      border-bottom: $border;
+      border-bottom: @border;
       > span {
         flex-grow: 1;
-        border-right: $border;
+        border-right: @border;
         display: inline-block;
         line-height: 22px;
         text-align: center;
@@ -1207,7 +1216,7 @@ ul {
       }
     }
     .mainFlow {
-      border-bottom: $border;
+      border-bottom: @border;
       > p {
         display: flex;
         flex-direction: row;
@@ -1223,7 +1232,7 @@ ul {
       }
     }
     .orderList {
-      border-bottom: $border;
+      border-bottom: @border;
       table {
         width: 100%;
         td {
@@ -1239,7 +1248,7 @@ ul {
     .netValueWrap {
       padding: 4px 8px;
       > .charWrap {
-        border: $border;
+        border: @border;
         width: 100%;
         height: 93px;
         position: relative;
@@ -1348,5 +1357,82 @@ ul {
     }  
   }
   
+}
+
+.blackStyle{
+  width: 100%;
+  .tradeinfo{
+    background-color: #191d1e;
+    border: 1px solid #3d4042;
+
+    .firstLine,
+    .sellFive,
+    .buyFive{
+      border-bottom: 1px solid #3d4042;
+    }
+
+    .firstLine>p>span,
+    .sellFive>div>p>span,
+    .buyFive>div>p>span,
+    .detailList>div>p>span,
+    .dealpricelist table td
+    {
+      color: #9ca7b3;
+    }
+
+    .dealpricelist table tr>td:last-child{
+      color: #dde2e7;
+    }
+
+    .sellFive>div:nth-of-type(3)>p>span,
+    .buyFive>div:nth-of-type(3)>p>span{
+      color: #06e2d6;
+    }
+
+    .detailList>div:nth-of-type(3)>p>span{
+      color: #dde2e7;
+    }
+
+    .capitalList {
+      .tabTop{
+        border-bottom: 1px solid #3d4042;
+        span{
+          border-right: 1px solid #3d4042;
+          color: #9ca7b3;
+
+          &.active{
+            background-color: transparent;
+            color: #f39700;
+          }
+        }
+      }
+      .mainFlow{
+        border-bottom: 1px solid #3d4042;
+        >p>span{
+          color: #9ca7b3;
+        }
+      }
+      .orderList{
+        border-bottom: 1px solid #3d4042;
+        td{
+          color: #9ca7b3;
+          &:nth-of-type(2),
+          &:nth-of-type(3){
+            color: #dde2e7;
+          }
+        }
+      }
+      .netValueWrap > .charWrap {
+          border: 1px solid #3d4042;
+          .middleLine{
+            background-color: #3d4042;
+          }
+      }
+      .netValueWrap .xLabels span{
+        color: #9ca7b3;
+      }
+    }
+    
+  }
 }
 </style>

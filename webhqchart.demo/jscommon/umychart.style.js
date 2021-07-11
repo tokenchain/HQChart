@@ -15,10 +15,12 @@
     !!手机上字体大小需要*分辨率比
 */
 
+/* umychart.js 里面已经有了
 function GetDevicePixelRatio()
 {
     return window.devicePixelRatio || 1;
 }
+*/
 
 //黑色风格
 var BLACK_STYLE=
@@ -34,13 +36,21 @@ var BLACK_STYLE=
     UpBarColor: "rgb(238,21,21)",   //上涨
     DownBarColor: "rgb(25,158,0)",  //下跌
     UnchagneBarColor: "rgb(228,228,228)", //平盘
+    EmptyBarBGColor:'rgb(0,0,0)',   //空心柱子背景色
 
     Minute: 
     {
-      VolBarColor: "rgb(255,236,0)",
-      PriceColor: "rgb(25,180,231)",
-      AreaPriceColor:"rgba(63,158,255,.3)",
-      AvPriceColor: "rgb(255,236,0)",
+        VolBarColor: null,
+        PriceColor: "rgb(25,180,231)",
+        AreaPriceColor:"rgba(63,158,255,.3)",
+        AvPriceColor: "rgb(255,236,0)",
+        PositionColor:'rgb(218,165,32)', 
+        VolTitleColor:"rgb(190,190,190)",
+        Before:
+        {
+            BGColor:"rgba(105,105,105,0.5)",
+            AvPriceColor:'rgb(248,248,255)'     //均线
+        }
     },
 
 
@@ -53,20 +63,57 @@ var BLACK_STYLE=
     UnchagneTextColor: "rgb(101,104,112)",
     CloseLineColor: 'rgb(178,34,34)',
 
+    Title:
+    {
+        TradeIndexColor:'rgb(105,105,105)', //交易指标颜色
+        ColorIndexColor:'rgb(112,128,144)',  //五彩K线颜色
+
+        VolColor:"rgb(101,104,112)",       //标题成交量
+        AmountColor:"rgb(101,104,112)",    //成交金额 
+        DateTimeColor:"rgb(101,104,112)",  //时间,日期  
+        SettingColor:"rgb(101,104,112)",   //周期,复权
+        NameColor:"rgb(101,104,112)" ,     //股票名称
+        TurnoverRateColor:'rgb(101,104,112)',       //换手率
+        PositionColor:"rgb(101,104,112)"       //持仓
+    },
+
     FrameBorderPen: "rgba(236,236,236,0.13)",     //边框
     FrameSplitPen: "rgba(236,236,236,0.13)",          //分割线
     FrameSplitTextColor: "rgb(101,104,112)",     //刻度文字颜色
     FrameSplitTextFont: 12*GetDevicePixelRatio() +"px 微软雅黑",        //坐标刻度文字字体
     FrameTitleBGColor: "rgb(0,0,0)",      //标题栏背景色
 
+    Frame:
+    { 
+        XBottomOffset:1*GetDevicePixelRatio(), //X轴文字向下偏移
+       
+        PercentageText:      //百分比坐标文字颜色
+        { 
+            PriceColor:'rgb(101,104,112)', 
+            PercentageColor:"rgb(101,104,112)", 
+            SplitColor:"rgb(101,104,112)",
+            Font:14*GetDevicePixelRatio() +"px 微软雅黑"
+        }
+    },   
+
+
+    FrameLatestPrice : {
+        TextColor:'rgb(255,255,255)',   //最新价格文字颜色
+        UpBarColor:"rgb(238,21,21)",    //上涨
+        DownBarColor:"rgb(25,158,0)",   //下跌
+        UnchagneBarColor:"rgb(190,190,190)",   //平盘
+        BGAlpha:0.6
+    },
+
     CorssCursorBGColor: "rgb(43,54,69)",            //十字光标背景
     CorssCursorTextColor: "rgb(255,255,255)",
     CorssCursorTextFont: 12*GetDevicePixelRatio() +"px 微软雅黑",
-    CorssCursorPenColor: "rgb(130,130,130)",           //十字光标线段颜色
+    CorssCursorHPenColor: "rgb(130,130,130)",           //十字光标线段颜色
+    CorssCursorVPenColor: "rgb(130,130,130)",           //十字光标线段颜色
 
     KLine:
     {
-        MaxMin: { Font: 12*GetDevicePixelRatio() +'px 微软雅黑', Color: 'rgb(111,111,111)' },   //K线最大最小值显示
+        MaxMin: { Font: 12*GetDevicePixelRatio() +'px 微软雅黑', Color: 'rgb(255,250,240)' },   //K线最大最小值显示
         Info:  //信息地雷
         {
             Investor:
@@ -161,7 +208,10 @@ var BLACK_STYLE=
         BGColor:'rgba(20,20,20,0.8)',    //背景色
         BorderColor:'rgb(210,210,210)',     //边框颜色
         TitleColor:'rgb(210,210,210)',       //标题颜色
-        TitleFont:13*GetDevicePixelRatio() +'px 微软雅黑'   //字体
+        TitleFont:13*GetDevicePixelRatio() +'px 微软雅黑',   //字体
+        DateTimeColor:'rgb(210,210,210)',
+        VolColor:"rgb(210,210,210)",       //标题成交量
+        AmountColor:"rgb(210,210,210)",    //成交金额
     },
 
     //走势图 信息地雷
@@ -172,6 +222,45 @@ var BLACK_STYLE=
         PointColor:'rgb(38,113,254)',
         LineColor:'rgb(120,167,255)',
         TextBGColor:'rgba(255,255,255,1)'
+    },
+
+    //筹码分布图
+    StockChip:
+    {
+        InfoColor:'rgb(255,255,255)', //文字颜色
+        DayInfoColor:'rgb(0,0,0)' //周期颜色内文字颜色
+    },
+
+    //深度图
+    DepthChart:
+    {
+        BidColor: { Line:"rgb(82,176,123)", Area:"rgba(82,176,123,0.5)"},  //卖
+        AskColor: { Line:"rgb(207,76,89)", Area:"rgba(207,76,89, 0.5)"},   //买
+        LineWidth:4
+    },
+
+    DepthCorss:
+    {
+        BidColor: { Line:"rgb(82,176,123)" },  //卖
+        AskColor: { Line:"rgb(207,76,89)" },   //买
+        LineWidth:2,    //线段宽度
+        LineDash:[3,3],
+        Tooltip:
+        { 
+            BGColor:'rgba(54,54,54, 0.8)', TextColor:"rgb(203,215,224)",
+            Border:{ Top:5, Left:20, Bottom:5, Center: 5},
+            Font:14*GetDevicePixelRatio() +"px 微软雅黑",
+            LineHeight:16   //单行高度
+        }
+    },
+
+    //区间选择
+    RectSelect:
+    {
+        LineColor:"rgb(115,83,64)",          //竖线  
+        LineWidth:1*GetDevicePixelRatio(),
+        LineDotted:[3,3], 
+        AreaColor:"rgba(26,13,7,0.5)",     //面积
     }
     
 };

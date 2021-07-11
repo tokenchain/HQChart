@@ -1,14 +1,44 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 扩展画法
+/*
+    copyright (c) 2018 jones
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    开源项目 https://github.com/jones2000/HQChart
+
+    jones_2000@163.com
+
+    图形扩展画法
+*/ 
+//日志
+import { JSConsole } from "./umychart.console.wechat.js"
 
 //行情数据结构体 及涉及到的行情算法(复权,周期等) 
-import {
+import 
+{
     JSCommon_ChartData as ChartData, JSCommon_HistoryData as HistoryData,
-    JSCommon_SingleData as SingleData, JSCommon_MinuteData as MinuteData
-} from "umychart.data.wechat.js";
+    JSCommon_SingleData as SingleData, JSCommon_MinuteData as MinuteData,
+    JSCommon_Guid as Guid,
+    JSCommon_ToFixedPoint as ToFixedPoint,
+    JSCommon_ToFixedRect as ToFixedRect,
+} from "./umychart.data.wechat.js";
 
-import { JSCommonCoordinateData as JSCommonCoordinateData } from "umychart.coordinatedata.wechat.js";
+import 
+{
+    JSCommonCoordinateData as JSCommonCoordinateData,
+    JSCommonCoordinateData_MARKET_SUFFIX_NAME as MARKET_SUFFIX_NAME
+} from "./umychart.coordinatedata.wechat.js";
+
+import 
+{
+    JSCommonResource_Global_JSChartResource as g_JSChartResource,
+    JSCommonResource_JSCHART_LANGUAGE_ID as JSCHART_LANGUAGE_ID,
+    JSCommonResource_Global_JSChartLocalization as g_JSChartLocalization,
+} from './umychart.resource.wechat.js'
+
+import 
+{
+    JSCommonSplit_IFrameSplitOperator as IFrameSplitOperator,
+} from './umychart.framesplit.wechat.js'
 
 function IExtendChartPainting() 
 {
@@ -33,29 +63,6 @@ function IExtendChartPainting()
     this.SetOption = function (option) { }  //设置参数接口
 }
 
-//配色
-function JSExtendChartPaintResource() 
-{
-    //K线tooltip
-    this.TooltipPaint = 
-    {
-        BGColor: 'rgba(250,250,250,0.8)',    //背景色
-        BorderColor: 'rgb(120,120,120)',     //边框颜色
-        TitleColor: 'rgb(120,120,120)',       //标题颜色
-        TitleFont: '13px 微软雅黑'   //字体
-    },
-
-    //弹幕
-    this.Barrage = 
-    {
-        Font: '16px 微软雅黑',   //字体
-        Height: 20,
-        Color: 'RGB(109,109,109)'
-    }
-}
-
-var g_JSExtendChartPaintResource = new JSExtendChartPaintResource();
-
 //K线Tooltip, 显示在左边或右边
 function KLineTooltipPaint() 
 {
@@ -67,11 +74,13 @@ function KLineTooltipPaint()
     this.IsEraseBG = true;
     this.DrawAfterTitle = true;
     this.ClassName = 'KLineTooltipPaint';
+    this.LatestPoint;               //手势位置
+    this.ShowPosition=0;            //显示位置 0=左 1=右
 
-    this.BorderColor = g_JSExtendChartPaintResource.TooltipPaint.BorderColor;    //边框颜色
-    this.BGColor = g_JSExtendChartPaintResource.TooltipPaint.BGColor;            //背景色
-    this.TitleColor = g_JSExtendChartPaintResource.TooltipPaint.TitleColor;      //标题颜色
-    this.Font = [g_JSExtendChartPaintResource.TooltipPaint.TitleFont];
+    this.BorderColor = g_JSChartResource.TooltipPaint.BorderColor;    //边框颜色
+    this.BGColor = g_JSChartResource.TooltipPaint.BGColor;            //背景色
+    this.TitleColor = g_JSChartResource.TooltipPaint.TitleColor;      //标题颜色
+    this.Font = [g_JSChartResource.TooltipPaint.TitleFont];
 
     this.Width = 50;
     this.Height = 100;
@@ -83,17 +92,36 @@ function KLineTooltipPaint()
     this.HQChart;
     this.KLineTitlePaint;
     this.IsHScreen = false;   //是否横屏
+    this.LanguageID = JSCHART_LANGUAGE_ID.LANGUAGE_CHINESE_ID;
 
     this.GetLeft = function () 
     {
-        if (this.IsHScreen) return this.ChartBorder.GetRightEx() - this.Height - this.Top;
-        return this.ChartBorder.GetLeft() + this.Left;
+        if (this.IsHScreen) 
+        {
+            return this.ChartBorder.GetRightEx()-this.Height-this.Top;
+        }
+        else
+        {
+            if (this.ShowPosition==0)
+                return this.ChartBorder.GetLeft()+this.Left;
+            else 
+                return this.ChartBorder.GetRight()-this.Width-this.Left;
+        }
     }
 
     this.GetTop = function () 
     {
-        if (this.IsHScreen) return this.ChartBorder.GetTop();
-        return this.ChartBorder.GetTopEx() + this.Top;
+        if (this.IsHScreen) 
+        {
+            if (this.ShowPosition==0)
+                return this.ChartBorder.GetTop()+this.Left;
+            else
+                return this.ChartBorder.GetBottom()-this.Width-this.Left;
+        }
+        else
+        {
+            return this.ChartBorder.GetTopEx()+this.Top;
+        }
     }
 
     this.Draw = function () 
@@ -105,25 +133,62 @@ function KLineTooltipPaint()
         var klineData = this.KLineTitlePaint.GetCurrentKLineData();
         if (!klineData) return;
 
+        var upperSymbol;
+        if (this.HQChart.Symbol) upperSymbol = this.HQChart.Symbol.toUpperCase();
+        var isFutures=MARKET_SUFFIX_NAME.IsChinaFutures(upperSymbol)?true:false;
+
         var lineCount = 8;    //显示函数
         if (this.ClassName === 'MinuteTooltipPaint') 
         {
             lineCount=7;
+            if (isFutures && IFrameSplitOperator.IsNumber(klineData.Position)) ++lineCount;    //期货多一个持仓量
         }
         else
         {
-            if (klineData.Time != null && !isNaN(klineData.Time) && klineData.Time > 0) lineCount = 9; //分钟K线多一列时间
+            if (IFrameSplitOperator.IsNumber(klineData.Time)) ++lineCount;      //分钟K线多一列时间
+            if (isFutures && IFrameSplitOperator.IsNumber(klineData.Position)) ++lineCount;   //持仓量
         }
 
-        //this.TitleColor=this.KLineTitlePaint.UnchagneColor;
         this.IsHScreen = this.ChartFrame.IsHScreen === true;
         this.Canvas.font = this.Font[0];
-        this.Width = this.Canvas.measureText(' 擎: 9999.99亿 ').width;
+        var defaultfloatPrecision = JSCommonCoordinateData.GetfloatPrecision(this.HQChart.Symbol);//价格小数位数
+        var maxText = ' 擎: 9999.99亿 ';
+        if (defaultfloatPrecision >= 5) maxText = ` 擎: ${99.99.toFixed(defaultfloatPrecision)} `;  //小数位数太多了
+        this.Width = this.Canvas.measureText(maxText).width;
         this.Height = this.LineHeight * lineCount + 2 * 2;
+        if (klineData && klineData.High>0)
+        {
+            maxText=` 擎: ${klineData.High.toFixed(defaultfloatPrecision)} `;
+            var textWidth=this.Canvas.measureText(maxText).width;
+            if (textWidth>this.Width) this.Width=textWidth;
+        }
 
+        this.CalculateShowPosition();
         this.DrawBG();
         this.DrawTooltipData(klineData);
         this.DrawBorder();
+    }
+
+    //判断显示位置
+    this.CalculateShowPosition=function()
+    {
+        this.ShowPosition=0;
+        if (!this.LatestPoint) return;
+
+        if(this.IsHScreen)
+        {
+            var top=this.ChartBorder.GetTop();
+            var height=this.ChartBorder.GetHeight();
+            var yCenter=top+height/2;
+            if (this.LatestPoint.Y<yCenter) this.ShowPosition=1;
+        }
+        else
+        {
+            var left=this.ChartBorder.GetLeft();
+            var width=this.ChartBorder.GetWidth();
+            var xCenter=left+width/2;
+            if (this.LatestPoint.X<xCenter) this.ShowPosition=1;
+        }
     }
 
     this.DrawBorder = function () 
@@ -132,8 +197,16 @@ function KLineTooltipPaint()
         var left = this.GetLeft();
         var top = this.GetTop();
         this.Canvas.strokeStyle = this.BorderColor;
-        if (isHScreen) this.Canvas.strokeRect(this.HQChart.ToFixedPoint(left), this.HQChart.ToFixedPoint(top), this.Height, this.Width);
-        else this.Canvas.strokeRect(this.HQChart.ToFixedPoint(left), this.HQChart.ToFixedPoint(top), this.Width, this.Height);
+        if (isHScreen)
+        { 
+            this.Canvas.strokeRect(this.HQChart.ToFixedPoint(left), this.HQChart.ToFixedPoint(top), 
+                this.HQChart.ToFixedRect(this.Height), this.HQChart.ToFixedRect(this.Width));
+        }
+        else 
+        {
+            this.Canvas.strokeRect(this.HQChart.ToFixedPoint(left), this.HQChart.ToFixedPoint(top), 
+                this.HQChart.ToFixedRect(this.Width), this.HQChart.ToFixedRect(this.Height));
+        }
     }
 
     this.DrawBG = function () 
@@ -175,17 +248,24 @@ function KLineTooltipPaint()
         var text = this.HQChart.FormatDateString(item.Date);
         this.Canvas.fillStyle = this.TitleColor;
         this.Canvas.fillText(text, left, top);
-
-        if (item.Time != null && !isNaN(item.Time) && item.Time > 0) 
+        var period = this.HQChart.Period;
+        if (ChartData.IsMinutePeriod(period, true) && IFrameSplitOperator.IsNumber(item.Time))
         {
             top += this.LineHeight;
             text = this.HQChart.FormatTimeString(item.Time);
             this.Canvas.fillText(text, left, top);
         }
-
+        else if (ChartData.IsSecondPeriod(period) && IFrameSplitOperator.IsNumber(item.Time))
+        {
+            top += this.LineHeight;
+            text = this.HQChart.FormatTimeString(item.Time,"HH:MM:SS");
+            this.Canvas.fillText(text, left, top);
+        }
+        
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('开:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-Open', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var color = this.KLineTitlePaint.GetColor(item.Open, item.YClose);
         text = item.Open.toFixed(defaultfloatPrecision);
         this.Canvas.fillStyle = color;
@@ -193,7 +273,8 @@ function KLineTooltipPaint()
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('高:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-High', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var color = this.KLineTitlePaint.GetColor(item.High, item.YClose);
         var text = item.High.toFixed(defaultfloatPrecision);
         this.Canvas.fillStyle = color;
@@ -201,7 +282,8 @@ function KLineTooltipPaint()
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('低:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-Low', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var color = this.KLineTitlePaint.GetColor(item.Low, item.YClose);
         var text = item.Low.toFixed(defaultfloatPrecision);
         this.Canvas.fillStyle = color;
@@ -209,7 +291,8 @@ function KLineTooltipPaint()
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('收:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-Close', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var color = this.KLineTitlePaint.GetColor(item.Close, item.YClose);
         var text = item.Close.toFixed(defaultfloatPrecision);
         this.Canvas.fillStyle = color;
@@ -217,24 +300,54 @@ function KLineTooltipPaint()
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('幅:', left, top);
-        var value = (item.Close - item.YClose) / item.YClose * 100;
-        var color = this.KLineTitlePaint.GetColor(value, 0);
-        var text = value.toFixed(2) + '%';
+        text = g_JSChartLocalization.GetText('Tooltip-Increase', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
+        if (item.YClose>0)
+        {
+            var value = (item.Close - item.YClose) / item.YClose * 100;
+            var color = this.KLineTitlePaint.GetColor(value, 0);
+            var text = value.toFixed(2) + '%';
+        }
+        else
+        {
+            var text='--.--';
+            var color = this.KLineTitlePaint.GetColor(0, 0);
+        }
         this.Canvas.fillStyle = color;
         this.Canvas.fillText(text, left + labelWidth, top);
 
         this.Canvas.fillStyle = this.TitleColor;
 
-        top += this.LineHeight;
-        this.Canvas.fillText('量:', left, top);
-        var text = this.HQChart.FormatValueString(item.Vol, 2);
-        this.Canvas.fillText(text, left + labelWidth, top);
+        if (IFrameSplitOperator.IsNumber(item.Vol))
+        {
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Vol', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = this.HQChart.FormatValueString(item.Vol, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
 
-        top += this.LineHeight;
-        this.Canvas.fillText('额:', left, top);
-        var text = this.HQChart.FormatValueString(item.Amount, 2);
-        this.Canvas.fillText(text, left + labelWidth, top);
+        if (IFrameSplitOperator.IsNumber(item.Amount))
+        {
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Amount',this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = this.HQChart.FormatValueString(item.Amount, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
+
+        //持仓量
+        var upperSymbol;
+        if (this.HQChart.Symbol) upperSymbol = this.HQChart.Symbol.toUpperCase();
+        if (MARKET_SUFFIX_NAME.IsChinaFutures(upperSymbol) && IFrameSplitOperator.IsNumber(item.Position)) 
+        {
+            this.Canvas.fillStyle = this.TitleColor;
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Position', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = IFrameSplitOperator.FormatValueString(item.Position, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
 
         if (this.IsHScreen) this.Canvas.restore();
     }
@@ -244,6 +357,7 @@ function KLineTooltipPaint()
     {
         if (option.LineHeight > 0) this.LineHeight = option.LineHeight;
         if (option.BGColor) this.BGColor = option.BGColor;
+        if (option.LanguageID > 0) this.LanguageID = option.LanguageID;
     }
 }
 
@@ -254,11 +368,36 @@ function MinuteTooltipPaint()
     delete this.newMethod;
 
     this.ClassName = 'MinuteTooltipPaint';
+    this.IsShowAveragePrice=true;
 
-    this.GetTop = function () 
+    this.GetTop=function()
     {
-        if (this.IsHScreen) return this.ChartBorder.GetTop();
-        return this.ChartBorder.GetTop() + this.Top;
+        if (this.IsHScreen) 
+        {
+            if (this.ShowPosition==0)
+                return this.ChartBorder.GetTop()+this.Left;
+            else
+                return this.ChartBorder.GetBottom()-this.Width-this.Left;
+        }
+        else
+        {
+            return this.ChartBorder.GetTop()+this.Top;
+        }
+    }
+
+    this.GetLeft=function()
+    {
+        if (this.IsHScreen) 
+        {
+            return this.ChartBorder.GetRight()-this.Height-this.Top;
+        }
+        else
+        {
+            if (this.ShowPosition==0)
+                return this.ChartBorder.GetLeft()+this.Left;
+            else 
+                return this.ChartBorder.GetRight()-this.Width-this.Left;
+        }
     }
 
     this.DrawTooltipData = function (item) 
@@ -301,40 +440,67 @@ function MinuteTooltipPaint()
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('价:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-Price', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var color = this.KLineTitlePaint.GetColor(item.Close, this.YClose);
         text = item.Close.toFixed(defaultfloatPrecision);
         this.Canvas.fillStyle = color;
         this.Canvas.fillText(text, left + labelWidth, top);
 
-        top += this.LineHeight;
-        this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('均:', left, top);
-        var color = this.KLineTitlePaint.GetColor(item.AvPrice, this.YClose);
-        var text = item.AvPrice.toFixed(defaultfloatPrecision);
-        this.Canvas.fillStyle = color;
-        this.Canvas.fillText(text, left + labelWidth, top);
+        if (IFrameSplitOperator.IsNumber(item.AvPrice) && this.IsShowAveragePrice==true)
+        {
+            top += this.LineHeight;
+            this.Canvas.fillStyle = this.TitleColor;
+            text = g_JSChartLocalization.GetText('Tooltip-AvPrice', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var color = this.KLineTitlePaint.GetColor(item.AvPrice, this.YClose);
+            var text = item.AvPrice.toFixed(defaultfloatPrecision);
+            this.Canvas.fillStyle = color;
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
 
         top += this.LineHeight;
         this.Canvas.fillStyle = this.TitleColor;
-        this.Canvas.fillText('幅:', left, top);
+        text = g_JSChartLocalization.GetText('Tooltip-Increase', this.LanguageID);
+        this.Canvas.fillText(text, left, top);
         var value = (item.Close - this.YClose) / this.YClose * 100;
         var color = this.KLineTitlePaint.GetColor(value, 0);
         var text = value.toFixed(2) + '%';
         this.Canvas.fillStyle = color;
         this.Canvas.fillText(text, left + labelWidth, top);
 
-        this.Canvas.fillStyle = this.TitleColor;
+        if (IFrameSplitOperator.IsNumber(item.Vol))
+        {
+            this.Canvas.fillStyle = this.TitleColor;
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Vol', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = this.HQChart.FormatValueString(item.Vol, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
+        
+        if (IFrameSplitOperator.IsNumber(item.Amount))
+        {
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Amount', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = this.HQChart.FormatValueString(item.Amount, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
 
-        top += this.LineHeight;
-        this.Canvas.fillText('量:', left, top);
-        var text = this.HQChart.FormatValueString(item.Vol, 2);
-        this.Canvas.fillText(text, left + labelWidth, top);
-
-        top += this.LineHeight;
-        this.Canvas.fillText('额:', left, top);
-        var text = this.HQChart.FormatValueString(item.Amount, 2);
-        this.Canvas.fillText(text, left + labelWidth, top);
+        //持仓量
+        var upperSymbol;
+        if (this.HQChart.Symbol) upperSymbol = this.HQChart.Symbol.toUpperCase();
+        if (MARKET_SUFFIX_NAME.IsChinaFutures(upperSymbol) && IFrameSplitOperator.IsNumber(item.Position)) 
+        {
+            this.Canvas.fillStyle = this.TitleColor;
+            top += this.LineHeight;
+            text = g_JSChartLocalization.GetText('Tooltip-Position', this.LanguageID);
+            this.Canvas.fillText(text, left, top);
+            var text = IFrameSplitOperator.FormatValueString(item.Position, 2, this.LanguageID);
+            this.Canvas.fillText(text, left + labelWidth, top);
+        }
+        
 
         if (this.IsHScreen) this.Canvas.restore();
     }
@@ -455,7 +621,7 @@ function BarrageList()
             }
         }
 
-        console.log(`[BarrageList::CacluatePlayLine] LineCount=${this.PlayList.length} Height=${this.Height}`)
+        JSConsole.Chart.Log(`[BarrageList::CacluatePlayLine] LineCount=${this.PlayList.length} Height=${this.Height}`)
     }
 
     //添加弹幕
@@ -479,6 +645,234 @@ function BarrageList()
     this.Count = function () { return this.Cache.length; } //未播放的弹幕个数
 }
 
+//背景图 支持横屏
+function BackgroundPaint() 
+{
+    this.newMethod = IExtendChartPainting;   //派生
+    this.newMethod();
+    delete this.newMethod;
+
+    this.ClassName = 'BackgroundPaint';
+
+    this.IsDynamic = false;
+    this.IsCallbackDraw = true;   //在回调函数里绘制, 不在Draw()中绘制
+
+    this.FrameID = 0;
+    this.Data;      //背景数据 { Start:, End:, Color:[] }
+    this.ID = Guid(); //唯一的ID
+
+    /*
+    this.Data=
+    [ 
+        { Start:{ Date:20181201 }, End:{ Date:20181230 }, Color:'rgb(44,55,44)' } , 
+        { Start:{ Date:20190308 }, End:{ Date:20190404 }, Color:['rgb(44,55,255)','rgb(200,55,255)'] } 
+    ]
+    */
+
+    this.ChartSubFrame;
+    this.ChartBorder;
+    this.KData;
+    this.Period;
+    this.XPointCount = 0;
+
+    this.SetOption = function (option) //设置
+    {
+        if (option.FrameID > 0) this.FrameID = option.FrameID;
+        if (IFrameSplitOperator.IsObjectExist(option.ID)) this.ID = option.ID;
+    }
+
+    this.Draw = function () 
+    {
+        if (!this.Data || !this.HQChart) return;
+        if (!this.ChartFrame || !this.ChartFrame.SubFrame || this.ChartFrame.SubFrame.length <= this.FrameID) return;
+        var klineChart = this.HQChart.ChartPaint[0];
+        if (!klineChart || !klineChart.Data) return;
+
+        this.ChartSubFrame = this.ChartFrame.SubFrame[this.FrameID].Frame;
+        this.ChartBorder = this.ChartSubFrame.ChartBorder;
+        this.KData = klineChart.Data;
+        this.Period = this.HQChart.Period;
+        if (!this.KData || this.KData.Data.length <= 0) return;
+
+        var isHScreen = (this.ChartSubFrame.IsHScreen === true);
+        this.XPointCount = this.ChartSubFrame.XPointCount;
+        var xPointCount = this.ChartSubFrame.XPointCount;
+
+        var firstKItem = this.KData.Data[this.KData.DataOffset];
+        var endIndex = this.KData.DataOffset + xPointCount - 1;
+        if (endIndex >= this.KData.Data.length) endIndex = this.KData.Data.length - 1;
+        var endKItem = this.KData.Data[endIndex];
+        var showData = this.GetShowData(firstKItem, endKItem);
+        if (!showData || showData.length <= 0) return;
+
+        var kLineMap = this.BuildKLineMap();
+        var bottom = this.ChartBorder.GetBottomEx();
+        var top = this.ChartBorder.GetTopEx();
+        var height = this.ChartBorder.GetHeightEx();
+        if (isHScreen) 
+        {
+            top = this.ChartBorder.GetRightEx();
+            bottom = this.ChartBorder.GetLeftEx();
+            height = this.ChartBorder.GetWidthEx();
+        }
+
+        for (var i in showData) 
+        {
+            var item = showData[i];
+            var rt = this.GetBGCoordinate(item, kLineMap);
+            if (!rt) continue;
+
+            if (Array.isArray(item.Color)) 
+            {
+                var gradient;
+                if (isHScreen) gradient = this.Canvas.createLinearGradient(bottom, rt.Left, top, rt.Left);
+                else gradient = this.Canvas.createLinearGradient(rt.Left, top, rt.Left, bottom);
+                var offset = 1 / item.Color.length;
+                for (var i in item.Color) 
+                {
+                    gradient.addColorStop(i * offset, item.Color[i]);
+                }
+                this.Canvas.fillStyle = gradient;
+            }
+            else 
+            {
+                this.Canvas.fillStyle = item.Color;
+            }
+
+            if (isHScreen) this.Canvas.fillRect(ToFixedRect(bottom), ToFixedRect(rt.Left), ToFixedRect(height), ToFixedRect(rt.Width));
+            else this.Canvas.fillRect(ToFixedRect(rt.Left), ToFixedRect(top), ToFixedRect(rt.Width), ToFixedRect(height));
+        }
+    }
+
+    this.GetShowData = function (first, end) 
+    {
+        var aryData = [];
+        for (var i in this.Data) {
+            var item = this.Data[i];
+            var showItem = {};
+            if (item.Start.Date >= first.Date && item.Start.Date <= end.Date) showItem.Start = item.Start;
+            if (item.End.Date >= first.Date && item.End.Date <= end.Date) showItem.End = item.End;
+            if (showItem.Start || showItem.End) 
+            {
+                showItem.Color = item.Color;
+                aryData.push(showItem);
+            }
+        }
+
+        return aryData;
+    }
+
+    this.BuildKLineMap = function () 
+    {
+        var isHScreen = (this.ChartSubFrame.IsHScreen === true);
+        var dataWidth = this.ChartSubFrame.DataWidth;
+        var distanceWidth = this.ChartSubFrame.DistanceWidth;
+        var xOffset = this.ChartBorder.GetLeft() + distanceWidth / 2.0 + g_JSChartResource.FrameLeftMargin;
+        if (isHScreen) xOffset = this.ChartBorder.GetTop() + distanceWidth / 2.0 + g_JSChartResource.FrameLeftMargin;
+        var chartright = this.ChartBorder.GetRight();
+        if (isHScreen) chartright = this.ChartBorder.GetBottom();
+
+        var mapKLine = { Data: new Map() }; //Key: date / date time, Value:索引
+        for (var i = this.KData.DataOffset, j = 0; i < this.KData.Data.length && j < this.XPointCount; ++i, ++j, xOffset += (dataWidth + distanceWidth)) 
+        {
+            var kItem = this.KData.Data[i];
+            var left = xOffset;
+            var right = xOffset + dataWidth;
+            if (right > chartright) break;
+            var x = left + (right - left) / 2;
+
+            if (j == 0) mapKLine.XLeft = left;
+            mapKLine.XRight = right;
+
+            var value = { Index: i, ShowIndex: j, X: x, Right: right, Left: left, Date: kItem.Date };
+            if (ChartData.IsMinutePeriod(this.Period, true)) 
+            {
+                var key = `Date:${kItem.Date} Time:${kItem.Time}`;
+                value.Time = kItem.Time;
+            }
+            else 
+            {
+                var key = `Date:${kItem.Date}`;
+            }
+
+            mapKLine.Data.set(key, value);
+        }
+
+        return mapKLine;
+    }
+
+    this.GetBGCoordinate = function (item, kLineMap) 
+    {
+        var xLeft = null, xRight = null;
+        if (item.Start) 
+        {
+            if (ChartData.IsMinutePeriod(this.Period, true))
+                var key = `Date:${item.Start.Date} Time:${item.Start.Time}`;
+            else
+                var key = `Date:${item.Start.Date}`;
+
+            if (kLineMap.Data.has(key)) 
+            {
+                var findItem = kLineMap.Data.get(key);
+                xLeft = findItem.Left;
+            }
+            else 
+            {
+                for (var kItem of kLineMap.Data) 
+                {
+                    var value = kItem[1];
+                    if (value.Date > item.Start.Date) 
+                    {
+                        xLeft = value.Left;
+                        break;
+                    }
+                }
+            }
+        }
+        else 
+        {
+            xLeft = kLineMap.XLeft;
+        }
+
+        if (item.End) 
+        {
+            if (ChartData.IsMinutePeriod(this.Period, true))
+                var key = `Date:${item.End.Date} Time:${item.End.Time}`;
+            else
+                var key = `Date:${item.End.Date}`;
+
+            if (kLineMap.Data.has(key)) 
+            {
+                var findItem = kLineMap.Data.get(key);
+                xRight = findItem.Right;
+            }
+            else 
+            {
+                var previousX = null;
+                for (var kItem of kLineMap.Data) 
+                {
+                    var value = kItem[1];
+                    if (value.Date > item.End.Date) 
+                    {
+                        xRight = previousX;
+                        break;
+                    }
+                    previousX = value.Right;
+                }
+            }
+        }
+        else 
+        {
+            xRight = kLineMap.XRight;
+        }
+
+        if (xLeft == null || xRight == null) return null;
+
+        return { Left: xLeft, Right: xRight, Width: xRight - xLeft };
+    }
+}
+
+
 //弹幕
 function BarragePaint() 
 {
@@ -491,9 +885,9 @@ function BarragePaint()
     this.IsEraseBG = true;
     this.HQChart;
 
-    this.Font = g_JSExtendChartPaintResource.Barrage.Font;
-    this.TextColor = g_JSExtendChartPaintResource.Barrage.Color;
-    this.FontHeight = g_JSExtendChartPaintResource.Barrage.Height;
+    this.Font = g_JSChartResource.Barrage.Font;
+    this.TextColor = g_JSChartResource.Barrage.Color;
+    this.FontHeight = g_JSChartResource.Barrage.Height;
 
     this.BarrageList = new BarrageList();  //字幕列表
     this.IsMoveStep = false;
@@ -597,6 +991,7 @@ module.exports =
         KLineTooltipPaint: KLineTooltipPaint,
         BarragePaint: BarragePaint,
         MinuteTooltipPaint: MinuteTooltipPaint,
+        BackgroundPaint: BackgroundPaint,
     },
 
     //单个类导出
@@ -604,4 +999,5 @@ module.exports =
     JSCommonExtendChartPaint_KLineTooltipPaint: KLineTooltipPaint,
     JSCommonExtendChartPaint_BarragePaint: BarragePaint,
     JSCommonExtendChartPaint_MinuteTooltipPaint: MinuteTooltipPaint,
+    JSCommonExtendChartPaint_BackgroundPaint: BackgroundPaint,
 };

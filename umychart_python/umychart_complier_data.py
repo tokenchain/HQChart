@@ -1,4 +1,11 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
+
 
 ###########################################################################
 #   
@@ -8,8 +15,30 @@
 import sys
 import time
 import datetime
-
 from umychart_complier_help  import JSComplierHelper
+
+class PERIOD_ID: 
+    # 日线周期
+    DAY=0
+    WEEK=1
+    MONTH=2
+    QUARTER=9
+    YEAR=3
+    # 分钟周期
+    MINUTE=4
+    MINUTE_5=5
+    MINUTE_15=6
+    MINUTE_30=7
+    MINUTE_60=8
+    MINUTE_120=11
+    MINUTE_240=12
+    # 自定日线周期
+    CUSTOM_DAY_PERIOD_START= 40000
+    CUSTOM_DAY_PERIOD_END= 49999
+    # 自定义分钟周期
+    CUSTOM_MINUTE_PERIOD_START=20000
+    CUSTOM_MINUTE_PERIOD_END=29999
+
 
 # 历史K线数据
 class HistoryData() :
@@ -102,6 +131,43 @@ class ChartData:
         self.Right=0                            # 复权 0=不复权 1=前复权 2=后复权
         self.DataType=dataType
 
+    @staticmethod # 是否是日线周期  0=日线 1=周线 2=月线 3=年线 9=季线 21=双周 [40001-50000) 自定义日线 (isIncludeBase 是否包含基础日线周期)
+    def IsDayPeriod(period, isIncludeBase) :
+        if period==1 or period==2 or period==3 or period==9 or period==21 :
+            return True
+        if period>PERIOD_ID.CUSTOM_DAY_PERIOD_START and period<=PERIOD_ID.CUSTOM_DAY_PERIOD_END :
+            return True
+        if  period==0 and isIncludeBase==True :
+            return True
+        return False
+
+    @staticmethod # 是否是分钟周期 4=1分钟 5=5分钟 6=15分钟 7=30分钟 8=60分钟 11=120分钟 12=240分钟 [20001-30000) 自定义分钟 (isIncludeBase 是否包含基础1分钟周期)
+    def IsMinutePeriod(period,isIncludeBase) :
+        if (period==5 or period==6 or period==7 or period==8 or period==11 or period==12) :
+            return True
+        if (period>PERIOD_ID.CUSTOM_MINUTE_PERIOD_START and period<=PERIOD_ID.CUSTOM_MINUTE_PERIOD_END) :
+            return True
+        if (period==4 and isIncludeBase==True) :
+            return True
+        return False
+
+    # 数据长度
+    def GetCount(self):
+        return len(self.Data)
+
+    # 获取最大最小值
+    def GetMaxMin(self):
+        dMaxPrice=self.Data[0].High
+        dMinPrice=self.Data[0].Low
+        for i in range(len(self.Data)) :
+            item=self.Data[i]
+            dMinPrice = min(dMinPrice,item.Low)
+            dMaxPrice = max(dMaxPrice,item.High)
+        return {"Max":dMaxPrice, "Min":dMinPrice}
+        
+    def GetItem(self,index):
+        return self.Data[index]
+        
     # 获取收盘价
     def GetClose(self) :
         result=[None] * len(self.Data)
