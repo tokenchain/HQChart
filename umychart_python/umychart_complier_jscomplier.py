@@ -1,4 +1,11 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
+
 
 import sys
 import json
@@ -106,20 +113,32 @@ class ScriptIndexConsole:
         self.Arguments=obj.Arguments    # 指标默认参数
         self.Name=obj.Name
         self.OutVar=None
+        self.AST=None           # 语法树
+        self.Parser=None
 
-    def ExecuteScript(self, obj=SymbolOption()) :
+    def ExecuteScript(self, obj=SymbolOption(), rebuild=True) : # rebuild 是否重新编译执行
         try :
             print('[ScriptIndexConsole::ExecuteScript] ', self.Script)
-            parser=JSParser(self.Script)
-            parser.Initialize()
-            program=parser.ParseScript()
-            ast=program
-            print('[ScriptIndexConsole.ExecuteScript] parser finish.')
+            if (self.AST and self.Parser and rebuild==False):
+                parser=self.Parser
+                ast= self.AST
+                print('[ScriptIndexConsole.ExecuteScript] use cache ast.')
+            else :
+                parser=JSParser(self.Script)
+                parser.Initialize()
+                program=parser.ParseScript()
+                ast=program
+                self.AST=ast        #缓存语法树
+                self.Parser=parser
+                print('[ScriptIndexConsole.ExecuteScript] parser finish.')
 
             option=SymbolOption(symbol=obj.Symbol, hqDataType=obj.HQDataType, right=obj.Right, period=obj.Period, 
                     request=RequestOption(maxDataCount=obj.MaxRequestDataCount, maxMinuteDayCount=obj.MaxRequestMinuteDayCount), 
                     args=self.Arguments if obj.Arguments==None else obj.Arguments) # 个股指定指标参数优先使用
             
+            if obj and obj.ProcCreateSymbolData:
+                option.ProcCreateSymbolData=obj.ProcCreateSymbolData
+
             execute=JSExecute(ast,option)
             execute.JobList=parser.Node.GetDataJobList()
             outVar=execute.Execute() 

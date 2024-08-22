@@ -3,7 +3,7 @@
   !-->
 
 <template>
-    <div class="draw-box" v-if="IsShowBrushTool" id="toolBox">
+    <div class="draw-box" v-if="IsShowBrushTool" id="toolBox" :class='{blackStyle: isBlackStyle}'>
         <ul>
         <!-- 关闭 -->
         <li class="closeBtn">
@@ -14,8 +14,8 @@
             @mousedown.stop="ToolBoxHandle"
             @mouseover="ToolBoxMove"
             ></span>
-            <svg class="icon icon-close" aria-hidden="true" @click="CloseBtn">
-            <use xlink:href="#icon-guanbi"></use>
+            <svg class="symbolIkcon icon-close" aria-hidden="true" @click="CloseBtn">
+              <use xlink:href="#icon-guanbi"></use>
             </svg>
         </li>
         <!-- 图标 -->
@@ -26,7 +26,7 @@
             :title="item.name"
             class="title-style"
         >
-            <svg class="icon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
+            <svg class="symbolIkcon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
             <use :href="item.icon"></use>
             </svg>
         </li>
@@ -37,7 +37,7 @@
             :class="AddBackgroundColor(item.name)"
             :title="item.name"
         >
-            <svg class="icon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
+            <svg class="symbolIkcon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
             <use :href="item.icon"></use>
             </svg>
         </li>
@@ -48,7 +48,7 @@
             :class="AddBackgroundColor(item.name)"
             :title="item.name"
         >
-            <svg class="icon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
+            <svg class="symbolIkcon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
             <use :href="item.icon"></use>
             </svg>
         </li>
@@ -59,7 +59,7 @@
             :class="AddBackgroundColor(item.name)"
             :title="item.tip"
         >
-            <svg class="icon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
+            <svg class="symbolIkcon icon-style" aria-hidden="true" @click="ClickIcon(item.name)">
             <use :href="item.icon"></use>
             </svg>
         </li>
@@ -68,7 +68,9 @@
 </template>
 
 <script>
-    import "../umychart.resource/font/brushSymbol.js";
+    //字体图标项目名称：H5 Stock
+    import '../umychart.resource/font/fontSymbol.js'
+    // import "../umychart.resource/font/brushSymbol.js";
     import "../umychart.resource/font/fontSymbol.css";
 
     import Vue from "vue";
@@ -86,57 +88,75 @@
         ClickName: "",
         DisabledTip: true,
         ToolList1: [
-            { name: "线段", icon: "#icon-xianduan" },
-            { name: "射线", icon: "#icon-shexian" },
-            { name: "趋势线", icon: "#icon-qushixian" },
-            { name: "水平线", icon: "#icon-shuipingxian" },
-            { name: "平行线", icon: "#icon-pinghangxian" },
-            { name: "平行通道", icon: "#icon-pinghangtongdao" },
-            { name: "价格通道线", icon: "#icon-jiagetongdaoxian" },
-            { name: "M头W底", icon: "#icon-MtouWdi" }
+            { name: "尺子", icon: "#icon-ruler" },
+            { name: "线段", icon: "#icon-draw_line" },
+            { name: "射线", icon: "#icon-draw_rays" },
+            { name: "箭头", icon: "#icon-arrow_up" },
+            { name: "标价线", icon: "#icon-price_line" },
+            { name: "PriceLabel", icon:"#icon-drawicon_message" },
+            { name: "PriceNote", icon:"#icon-draw_line" },
+            { name: "趋势线", icon: "#icon-draw_trendline" },
+            { name: "水平线", icon: "#icon-draw_hline" },
+            { name: "水平线段", icon: "#icon-draw_hlinesegment" },
+            { name: "垂直线", icon: "#icon-vertical_line" },
+            { name: "平行线", icon: "#icon-draw_parallel_lines" },
+            { name: "平行射线", icon: "#icon-draw_p_rays_lines" },
+            { name: "平行通道", icon: "#icon-draw_parallelchannel" },
+            { name: "价格通道线", icon: "#icon-draw_pricechannel" },
+            { name: "M头W底", icon: "#icon-draw_wavemw" },
+            { name: "头肩型", icon:"#icon-draw_head_shoulders_bt" }, 
+            { name: "波浪尺", icon: "#icon-waveruler" },
+            { name: "AB波浪尺", icon: "#icon-waveruler" },
+            { name: "箱型线", icon: "#icon-draw_box" },
+            { name: "涂鸦线段", icon: "#icon-draw_line" },
         ],
         ToolList2: [
-            { name: "圆弧线", icon: "#icon-yuanhuxian" },
-            { name: "矩形", icon: "#icon-juxing" },
-            { name: "平行四边形", icon: "#icon-pinghangsibianxing" },
-            { name: "三角形", icon: "#icon-sanjiaoxing" },
-            { name: "圆", icon: "#icon-yuan" },
-            { name: "对称角度", icon: "#icon-duichengjiaodu" }
+            { name: "圆弧线", icon: "#icon-draw_arc" },
+            { name: "矩形", icon: "#icon-rectangle" },
+            { name: "平行四边形", icon: "#icon-draw_quadrangle" },
+            { name: "三角形", icon: "#icon-draw_triangle" },
+            { name: "圆", icon: "#icon-draw_circle" },
+            { name: "对称角度", icon: "#icon-draw_symangle" }
         ],
 
         ToolList3: [
-            { name: "江恩角度线", icon: "#icon-jiangenjiaoduxian" },
-            { name: "斐波那契周期线", icon: "#icon-feibonaqizhouxian" },
-            { name: "阻速线", icon: "#icon-zusuxian" },
-            { name: "黄金分割", icon: "#icon-huangjinfenge" },
-            { name: "百分比线", icon: "#icon-baifenbixian" },
-            { name: "波段线", icon: "#icon-boduanxian" }
+            { name: "江恩角度线", icon: "#icon-draw_gannfan" },
+            { name: "斐波那契周期线", icon: "#icon-draw_fibonacci" },
+            { name: "阻速线", icon: "#icon-draw_resline" },
+            { name: "黄金分割", icon: "#icon-draw_goldensection" },
+            { name: "百分比线", icon: "#icon-draw_percentage" },
+            { name: "波段线", icon: "#icon-draw_waveband" },
+            { name: "线形回归线", icon: "#icon-linear_3" },
+            { name: "线形回归带", icon: "#icon-linear_1" },
+            { name: "延长线形回归带", icon: "#icon-linear_2" }
+            
         ],
 
         ToolList4: [
-            { name: "文本", icon: "#icon-wenben", tip: "文本" },
+            { name: "文本", icon: "#icon-draw_text", tip: "文本" },
             {
             name: "icon-arrow_up",
-            icon: "#icon-xiangshangjiantou",
+            icon: "#icon-arrow_up",
             tip: "向上箭头"
             },
             {
             name: "icon-arrow_down",
-            icon: "#icon-xiangxiajiantou",
+            icon: "#icon-arrow_down",
             tip: "向下箭头"
             },
             {
             name: "icon-arrow_right",
-            icon: "#icon-xiangyoujiantou",
+            icon: "#icon-arrow_right",
             tip: "向右箭头"
             },
             {
             name: "icon-arrow_left",
-            icon: "#icon-xiangzuojiantou",
+            icon: "#icon-arrow_left",
             tip: "向左箭头"
             },
-            { name: "全部删除", icon: "#icon-shanchu", tip: "全部删除" }
-        ]
+            { name: "全部删除", icon: "#icon-recycle_bin", tip: "全部删除" }
+        ],
+        isBlackStyle: false
         };
     },
     props: {
@@ -147,7 +167,12 @@
         this.ToolBoxHandle();
     },
     methods: {
-        ToolBoxHandle() {
+      //风格切换
+      ChangeStyle(styleName){
+        // debugger
+        this.isBlackStyle = 'black' === styleName;
+      },
+      ToolBoxHandle() {
         this.DisabledTip = true;
         ///用以获取滚动条的距离
         let getStyle = function(obj, name) {
@@ -245,10 +270,10 @@
 </script>
 
 
-<style lang="scss" type="text/scss">
+<style lang="less">
     #toolBox {
-    width: 115px;
-    height: 516px;
+    width: 145px;
+    height: 650px;
     border: 1px solid #dadada;
     position: absolute;
     z-index: 999;
@@ -289,12 +314,30 @@
         }
         }
         .line-style {
-        width: 87px;
-        height: 1px;
-        display: block;
-        background: #e3e7ea;
-        margin: 10px 14px;
+          width: 100px;
+          height: 1px;
+          display: block;
+          background: #e3e7ea;
+          margin: 10px calc(50% - 50px);
+          /* margin-left: ; */
         }
     }
+    }
+
+    #toolBox.blackStyle{
+      background-color: #2f363b;
+	    border: solid 1px #181c1f;
+
+      .closeBtn .move-area{
+        background: #2f363b;  
+      }
+      .closeBtn .icon-close{
+        color: #9ca7b3;
+      }
+
+      .line-style{
+        background: #202427;
+      }
+      
     }
 </style>

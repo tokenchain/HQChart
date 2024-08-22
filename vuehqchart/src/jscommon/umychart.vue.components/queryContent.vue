@@ -287,10 +287,12 @@ export default {
   methods: {
     ChangeContentShow(index) {
       this.TabIndex = index;
+      // this.OnSize()
       switch (index) {
         case 0:
-          this.$refs.tableContent.style.display = "block";
-          this.$refs.stockdeal.OnSize();
+          // this.$refs.tableContent.style.display = "block";
+          this.OnSize()
+          // this.$refs.stockdeal.OnSize();
           this.$refs.charWrap.style.display = "none";
           this.$refs.divdealcount.style.display = "none";
           this.$refs.divdayline.style.display = "none";
@@ -299,8 +301,9 @@ export default {
           break;
         case 1:
           this.$refs.tableContent.style.display = "none";
-          this.$refs.charWrap.style.display = "block"; //直接设置到dom里面 vue里面的设置是异步的
-          this.$refs.stockChart.OnSize();
+          // this.$refs.charWrap.style.display = "block"; //直接设置到dom里面 vue里面的设置是异步的
+          this.OnSize()
+          // this.$refs.stockChart.OnSize();
           this.$refs.divdealcount.style.display = "none";
           this.$refs.divdayline.style.display = "none";
           this.IsShow.DealDetail = false;
@@ -309,9 +312,10 @@ export default {
         case 2:
           this.$refs.tableContent.style.display = "none";
           this.$refs.charWrap.style.display = "none"; //直接设置到dom里面 vue里面的设置是异步的
-          this.$refs.divdealcount.style.display = "block";
+          // this.$refs.divdealcount.style.display = "block";
+          this.OnSize()
           this.$refs.divdayline.style.display = "none";
-          this.$refs.stockdealcount.OnSize();
+          // this.$refs.stockdealcount.OnSize();
           this.IsShow.DealDetail = false;
           this.IsShow.HistoryDayLine = false;
           break;
@@ -319,8 +323,9 @@ export default {
           this.$refs.tableContent.style.display = "none";
           this.$refs.charWrap.style.display = "none"; //直接设置到dom里面 vue里面的设置是异步的
           this.$refs.divdealcount.style.display = "none";
-          this.$refs.divdayline.style.display = "block";
-          this.$refs.historydayline.OnSize();
+          // this.$refs.divdayline.style.display = "block";
+          this.OnSize()
+          // this.$refs.historydayline.OnSize();
           this.IsShow.DealDetail = false;
           this.IsShow.HistoryDayLine = true;
           break;  
@@ -417,11 +422,7 @@ export default {
         contentTopHeight -
         selectOrderWrapHeight -
         pagepromptHeight;
-      var mainWdith = $(".divdealday").width();
-
-      $(".divdealday").height(mainHight);
-      var stockdeal = this.$refs.stockdeal;
-      stockdeal.OnSize();
+      // var mainWdith = $(".divdealday").width();
 
       var bodyWidth =
         document.documentElement.clientWidth || document.body.clientWidth;
@@ -429,24 +430,40 @@ export default {
         document.documentElement.clientHeight || document.body.clientHeight;
       var width = bodyWidth;
       var height = bodyHeight - 45 - 70 - 60;
-      var divChart = this.$refs.charWrap;
-      divChart.style.width = width + "px";
-      divChart.style.height = height + "px";
-      var stockChart = this.$refs.stockChart;
-      stockChart.OnSize();
+      switch(this.TabIndex){
+        case 0:
+          var tableContent = this.$refs.tableContent;
+          tableContent.style.height = mainHight + 'px';
+          tableContent.style.display = "block";
+          var stockdeal = this.$refs.stockdeal;
+          stockdeal.OnSize();
+          break;
+        case 1:
+          var divChart = this.$refs.charWrap;
+          divChart.style.width = width + "px";
+          divChart.style.height = height + "px";
+          charWrap.style.display = "block";
+          var stockChart = this.$refs.stockChart;
+          stockChart.OnSize();
+          break;
+        case 2:
+          var divdealcount = this.$refs.divdealcount;
+          divdealcount.style.width = width + "px";
+          divdealcount.style.height = height + "px";
+          divdealcount.style.display = "block";
+          var stockdealcount = this.$refs.stockdealcount;
+          stockdealcount.OnSize();
+          break;
+        case 3:
+          var divdayline = this.$refs.divdayline;
+          divdayline.style.width = width + "px";
+          divdayline.style.height =  height + "px";
+          divdayline.style.display = "block";
+          this.$refs.historydayline.OnSize();
+          break;
 
-      var divdealcount = this.$refs.divdealcount;
-      divdealcount.style.width = width + "px";
-      divdealcount.style.height = height + "px";
-      var stockdealcount = this.$refs.stockdealcount;
-      stockdealcount.OnSize();
-
-      var divdayline = this.$refs.divdayline;
-      divdayline.style.width = width + "px";
-      divdayline.style.height =  height + "px";
-      this.$refs.historydayline.OnSize();
-
-      var minWidth = 1062;
+      }
+      
     },
     FormatDateString(date, hasLine) {
       if (hasLine) {
@@ -505,7 +522,7 @@ export default {
 };
 </script>
 
-<style lang='scss'>
+<style lang='less'>
 * {
   margin: 0;
   padding: 0;
@@ -697,14 +714,14 @@ body {
       height: 20px;
       margin-top: 20px;
       margin-left: 20px;
-      $tabBorder: 1px solid #2f2f2f;
-      border: $tabBorder;
+      @tabBorder: 1px solid #2f2f2f;
+      border: @tabBorder;
       > span {
         display: inline-block;
         line-height: 20px;
         padding: 0 10px;
         cursor: pointer;
-        border-right: $tabBorder;
+        border-right: @tabBorder;
       }
       > span:last-child {
         border-right: none;

@@ -1,40 +1,93 @@
 /*
+    copyright (c) 2018 jones
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
     开源项目 https://github.com/jones2000/HQChart
 
+    jones_2000@163.com
+
+    系统录入的指标
+*/
+
+import 
+{ 
+    IFrameSplitOperator,
+} from './umychart.framesplit.wechat.js'
+
+/*
     指标数据脚本 系统内置指标都写在这里
     Name：指标名字
+    Args:参数 { Name:名字, Value=值 }
     Description：指标描述信息
     IsMainIndex：是否是主图指标 true=主图指标 false=副图指标
     KLineType:K线设置 -1=主图不显示K线(只在主图有效) 0=在副图显示K线 1=在副图显示K线(收盘价线) 2=在副图显示K线(美国线)
     InstructionType: 1=专家指示  2=五彩K线
     FloatPrecision: 小数位数 缺省=2
+    StringFormat: 1=带单位万/亿 2=原始格式  缺省=1
     YSplitScale:  Y固定刻度 [1,8,10]
     YSpecificMaxMin: 固定Y轴最大最小值 { Max: 9, Min: 0, Count: 3 };
+    OutName:动态输出变量名字 [{Name:原始变量名, DynamicName:动态名字格式}] 如 {Name:"MA1", DynamicName:"MA{M1}"};
+    YAxis:{ FloatPrecision:小数位数, StringFormat:， EnableRemoveZero }    //Y轴刻度输出格式
 */
+
+//周期条件枚举
+var CONDITION_PERIOD =
+{
+    MINUTE_ID: 101,            //分钟      走势图
+    MULTIDAY_MINUTE_ID: 102,   //多日分钟  走势图
+    HISTORY_MINUTE_ID: 103,    //历史分钟  走势图
+
+    //K线周期
+    KLINE_DAY_ID: 0,
+    KLINE_WEEK_ID: 1,
+    KLINE_MONTH_ID: 2,
+    KLINE_YEAR_ID: 3,
+    KLINE_MINUTE_ID: 4,
+    KLINE_5_MINUTE_ID: 5,
+    KLINE_15_MINUTE_ID: 6,
+    KLINE_30_MINUTE_ID: 7,
+    KLINE_60_MINUTE_ID: 8
+};
+
+//自定义的指标脚本
+function CustomIndexScript() 
+{
+    this.DataMap = new Map(); //key=指标id, value=data {ID:, Name：指标名字, Description：指标描述信息 Args:参数 ......}
+
+    this.Get = function (id) 
+    {
+        if (!this.DataMap.has(id)) return null;
+        return this.DataMap.get(id);
+    }
+
+    this.Add = function (data) 
+    {
+        this.DataMap.set(data.ID, data);
+    }
+}
+
+var g_CustomIndex = new CustomIndexScript();
 
 function JSIndexScript()
 {
-
-}
-
-JSIndexScript.prototype.Get=function(id)
-{
-    var DataMap=new Map(
+    this.DataMap = new Map(
         [
-            ['MA', this.MA], ['均线', this.MA],['BOLL', this.BOLL],['BBI', this.BBI],
-            ['DKX', this.DKX],['MIKE', this.MIKE],['PBX', this.PBX],
-            ['ENE', this.ENE],['MACD', this.MACD],['KDJ', this.KDJ],
-            ['VOL', this.VOL],['成交量', this.VOL],['RSI', this.RSI],['BRAR', this.BRAR],
-            ['WR', this.WR],['BIAS', this.BIAS],['OBV', this.OBV],
-            ['DMI', this.DMI],['CR', this.CR],['PSY', this.PSY],
-            ['CCI', this.CCI],['DMA', this.DMA],['TRIX', this.TRIX],
-            ['VR', this.VR],['EMV', this.EMV],['ROC', this.ROC],
-            ['MIM', this.MIM],['FSL', this.FSL],['CYR', this.CYR],
-            ['MASS', this.MASS],['WAD', this.WAD],['CHO', this.CHO],
-            ['ADTM', this.ADTM],['HSL', this.HSL],['BIAS36', this.BIAS36],
-            ['BIAS_QL', this.BIAS_QL],['DPO', this.DPO],['OSC', this.OSC],
-            ['ATR', this.ATR],['NVI', this.NVI],['PVI', this.PVI],
-            ['UOS', this.UOS],['CYW', this.CYW],['LON', this.LON],
+            ['MA', this.MA], ['均线', this.MA], ['BOLL', this.BOLL], ['BBI', this.BBI],
+            ["MA4", this.MA4], ["MA5", this.MA5], ["MA6", this.MA6], ["MA7", this.MA7], ["MA8", this.MA8],
+            ['DKX', this.DKX], ['MIKE', this.MIKE], ['PBX', this.PBX],
+            ['ENE', this.ENE], ['MACD', this.MACD], ['KDJ', this.KDJ],["MACD2", this.MACD2],
+            ['VOL', this.VOL],  ['VOL2', this.VOL2],['成交量', this.VOL], ['RSI', this.RSI], ['BRAR', this.BRAR],
+            ['WR', this.WR], ['BIAS', this.BIAS], ['OBV', this.OBV],
+            ['DMI', this.DMI], ['CR', this.CR], ['PSY', this.PSY],
+            ['CCI', this.CCI], ['DMA', this.DMA], ['TRIX', this.TRIX],
+            ['VR', this.VR], ['EMV', this.EMV], ['ROC', this.ROC],
+            ['MIM', this.MIM], ['FSL', this.FSL], ['CYR', this.CYR],
+            ['MASS', this.MASS], ['WAD', this.WAD], ['CHO', this.CHO],
+            ['ADTM', this.ADTM], ['HSL', this.HSL], ['BIAS36', this.BIAS36],
+            ['BIAS_QL', this.BIAS_QL], ['DPO', this.DPO], ['OSC', this.OSC],
+            ['ATR', this.ATR], ['NVI', this.NVI], ['PVI', this.PVI],
+            ['UOS', this.UOS], ['CYW', this.CYW], ['LON', this.LON],
             ['NDB', this.NDB], ['SKDJ', this.SKDJ], ['KD', this.KD], ['FKX', this.FKX],
             ['DKCOL', this.DKCOL], ['UDL', this.UDL], ['MFI', this.MFI], ['LWR', this.LWR],
             ['MARSI', this.MARSI], ['CYD', this.CYD], ['CYF', this.CYF], ['TAPI', this.TAPI],
@@ -47,18 +100,23 @@ JSIndexScript.prototype.Get=function(id)
             ['ALLIGAT', this.ALLIGAT], ['ZX', this.ZX], ['XS', this.XS], ['XS2', this.XS2],
             ['SG-XDT', this.SG_XDT], ['SG-SMX', this.SG_SMX], ['SG-LB', this.SG_LB], ['SG-PF', this.SG_PF],
             ['RAD', this.RAD], ['SHT', this.SHT], ['ZLJC', this.ZLJC], ['ZLMM', this.ZLMM], ['SLZT', this.SLZT],
-            ['ADVOL', this.ADVOL], ['CYC', this.CYC], ['CYS', this.CYS], ['CYQKL', this.CYQKL],
-            ['SCR', this.SCR], ['ASR', this.ASR],['SAR',this.SAR],['TJCJL',this.TJCJL],
+            ['ADVOL', this.ADVOL], ['CYC', this.CYC], ['CYS', this.CYS], ['CYQKL', this.CYQKL],["SQJZ", this.SQJZ],["XT", this.XT],["CFJT", this.CFJT],
+            ["CYX",this.CYX],["WAVE",this.WAVE],
+            ['SCR', this.SCR], ['ASR', this.ASR], ['SAR', this.SAR], ['TJCJL', this.TJCJL], ['量比', this.VOLRate],
 
             ['EMPTY', this.EMPTY],  //什么都不显示的指标
             ['操盘BS点', this.FXG_BSPoint],
+            ['EMA', this.EMA3], ['EMA4', this.EMA4], ['EMA5', this.EMA5],['EMA6', this.EMA6],
 
-            ['Zealink-资金吸筹', this.Zealink_Index1], ['Zealink-牛熊区间', this.Zealink_Index2],['Zealink-持仓信号', this.Zealink_Index3],
-            ['Zealink-增减持', this.Zealink_Index4], ['Zealink-大宗交易', this.Zealink_Index5], ['Zealink-信托持股', this.Zealink_Index6],
-            ['Zealink-官网新闻', this.Zealink_Index7], ['Zealink-高管要闻', this.Zealink_Index8], ['Zealink-股权质押', this.Zealink_Index9],
+            ['CJL2', this.CJL],  //期货持仓量
+            ["持仓量", this.VOL_POSITION],  //成交量+持仓量
+
+            //指南针
+            ["ZNZ_CBAND", this.ZNZ_CBAND],["ZNZ_RPY2",this.ZNZ_RPY2],["ZNZ_RPY1", this.ZNZ_RPY1],
+
 
             ['飞龙四式', this.Dragon4_Main], ['飞龙四式-附图', this.Dragon4_Fig],
-            ['资金分析', this.FundsAnalysis], ['融资占比', this.MarginProportion], 
+            ['资金分析', this.FundsAnalysis], ['融资占比', this.MarginProportion],
             ['负面新闻', this.NewsNegative], ['机构调研', this.NewsResearch], ['董秘连线', this.NewsInteract], ['涨跌趋势', this.UpDownAnalyze],
 
             //外包指标
@@ -89,10 +147,56 @@ JSIndexScript.prototype.Get=function(id)
             ['TEST', this.TEST] //测试用
         ]
     );
+}
 
-    var func=DataMap.get(id);
-    if (func) return func();
+JSIndexScript.AddIndex = function (aryIndex)  //添加自定义指标
+{
+    for (var i in aryIndex) 
+    {
+        g_CustomIndex.Add(aryIndex[i]);
+    }
+}
 
+//修改指标属性
+JSIndexScript.ModifyAttribute=function(indexInfo, attribute)
+{
+    if (!attribute) return;
+
+    if (attribute.Args) indexInfo.Args=attribute.Args;    //外部可以设置参数
+    if (IFrameSplitOperator.IsNumber(attribute.FloatPrecision)) indexInfo.FloatPrecision=attribute.FloatPrecision;
+    if (IFrameSplitOperator.IsNumber(attribute.StringFormat)) indexInfo.StringFormat=attribute.StringFormat;
+    if (IFrameSplitOperator.IsBool(attribute.IsSync)) indexInfo.IsSync=attribute.IsSync;
+    if (IFrameSplitOperator.IsBool(attribute.IsShortTitle)) indexInfo.IsShortTitle=attribute.IsShortTitle;
+    if (attribute.TitleFont) indexInfo.TitleFont=attribute.TitleFont;
+    if (attribute.Lock) indexInfo.Lock=attribute.Lock;
+    if (IFrameSplitOperator.IsNumber(attribute.YSplitType)) indexInfo.YSplitType=attribute.YSplitType;
+    if (IFrameSplitOperator.IsBool(attribute.IsShowIndexTitle)) indexInfo.IsShowIndexTitle=attribute.IsShowIndexTitle;
+    if (IFrameSplitOperator.IsNumber(attribute.KLineType)) indexInfo.KLineType=attribute.KLineType;
+
+    if (attribute.YAxis)
+    {
+        var item=attribute.YAxis;
+        if (!indexInfo.YAxis) indexInfo.YAxis={ };
+        if (IFrameSplitOperator.IsNumber(item.FloatPrecision)) indexInfo.YAxis.FloatPrecision=item.FloatPrecision;
+        if (IFrameSplitOperator.IsNumber(item.StringFormat)) indexInfo.YAxis.StringFormat=item.StringFormat;
+        if (IFrameSplitOperator.IsBool(item.EnableRemoveZero)) indexInfo.YAxis.EnableRemoveZero=item.EnableRemoveZero;
+    }
+}
+
+JSIndexScript.prototype.Get=function(id)
+{
+    var data = g_CustomIndex.Get(id);
+    if (data) return data;
+
+    var func=this.DataMap.get(id);
+    if (func)
+    {
+        var data=func();
+        data.ID=id;
+        return data;
+    } 
+
+    console.log(`[JSIndexScript::Get] can't find index by id=${id}`);
     return null;
 }
 
@@ -100,12 +204,225 @@ JSIndexScript.prototype.MA=function()
 {
     let data=
     {
-        Name:'MA', Description:'均线', IsMainIndex:true,
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat:2,
         Args:[ { Name:'M1', Value:5}, { Name:'M2', Value:10 }, { Name:'M3', Value:20} ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" }],
         Script: //脚本
 'MA1:MA(CLOSE,M1);\n\
 MA2:MA(CLOSE,M2);\n\
 MA3:MA(CLOSE,M3);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.MA4 = function () {
+    let data =
+    {
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat: 2,
+        Args: [{ Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }, { Name: 'M3', Value: 20 }, { Name: 'M4', Value: 60 }],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" } ],
+        Script: //脚本
+            'MA1:MA(CLOSE,M1);\n\
+MA2:MA(CLOSE,M2);\n\
+MA3:MA(CLOSE,M3);\n\
+MA4:MA(CLOSE,M4);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.MA5 = function () {
+    let data =
+    {
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat: 2,
+        Args: [{ Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }, { Name: 'M3', Value: 20 }, { Name: 'M4', Value: 60 }, { Name: 'M5', Value: 0 }],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },{Name:'MA5',DynamicName:"MA{M5}" } ],
+        Script: //脚本
+            'MA1:MA(CLOSE,M1);\n\
+MA2:MA(CLOSE,M2);\n\
+MA3:MA(CLOSE,M3);\n\
+MA4:MA(CLOSE,M4);\n\
+MA5:MA(CLOSE,M5);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.MA6 = function () {
+    let data =
+    {
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat: 2,
+        Args:
+            [
+                { Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }, { Name: 'M3', Value: 20 }, { Name: 'M4', Value: 60 },
+                { Name: 'M5', Value: 0 }, { Name: 'M6', Value: 0 }
+            ],
+        OutName:
+            [ 
+                {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },
+                {Name:'MA5',DynamicName:"MA{M5}" } ,{ Name:'MA6',DynamicName:"MA{M6}" } 
+            ],
+        Script: //脚本
+            'MA1:MA(CLOSE,M1);\n\
+MA2:MA(CLOSE,M2);\n\
+MA3:MA(CLOSE,M3);\n\
+MA4:MA(CLOSE,M4);\n\
+MA5:MA(CLOSE,M5);\n\
+MA6:MA(CLOSE,M6);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.MA7 = function () {
+    let data =
+    {
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat: 2,
+        Args:
+        [
+            { Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }, { Name: 'M3', Value: 20 }, { Name: 'M4', Value: 60 },
+            { Name: 'M5', Value: 0 }, { Name: 'M6', Value: 0 }, { Name: 'M7', Value: 0 }
+        ],
+        OutName:
+        [ 
+            {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },
+            {Name:'MA5',DynamicName:"MA{M5}" } ,{ Name:'MA6',DynamicName:"MA{M6}" } ,{ Name:'MA7',DynamicName:"MA{M7}" }
+        ],
+        Script: //脚本
+            'MA1:MA(CLOSE,M1);\n\
+MA2:MA(CLOSE,M2);\n\
+MA3:MA(CLOSE,M3);\n\
+MA4:MA(CLOSE,M4);\n\
+MA5:MA(CLOSE,M5);\n\
+MA6:MA(CLOSE,M6);\n\
+MA7:MA(CLOSE,M7);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.MA8 = function () {
+    let data =
+    {
+        Name: 'MA', Description: '均线', IsMainIndex: true, StringFormat: 2,
+        Args:
+        [
+            { Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }, { Name: 'M3', Value: 20 }, { Name: 'M4', Value: 60 },
+            { Name: 'M5', Value: 0 }, { Name: 'M6', Value: 0 }, { Name: 'M7', Value: 0 }, { Name: 'M8', Value: 0 }
+        ],
+        OutName:
+        [ 
+            {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },
+            {Name:'MA5',DynamicName:"MA{M5}" } ,{ Name:'MA6',DynamicName:"MA{M6}" } ,{ Name:'MA7',DynamicName:"MA{M7}" },{ Name:'MA8',DynamicName:"MA{M8}" }
+        ],
+        Script: //脚本
+            'MA1:MA(CLOSE,M1);\n\
+MA2:MA(CLOSE,M2);\n\
+MA3:MA(CLOSE,M3);\n\
+MA4:MA(CLOSE,M4);\n\
+MA5:MA(CLOSE,M5);\n\
+MA6:MA(CLOSE,M6);\n\
+MA7:MA(CLOSE,M7);\n\
+MA8:MA(CLOSE,M8);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.EMA3=function()
+{
+    let data=
+    {
+        Name:'EMA', Description:'指数移动平均值', IsMainIndex:true, StringFormat:2,
+        Args:
+        [ 
+            { Name:'M1', Value:5}, { Name:'M2', Value:10 }, { Name:'M3', Value:20}
+        ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" } ],
+        Script: //脚本
+'MA1:EMA(CLOSE,M1);\n\
+MA2:EMA(CLOSE,M2);\n\
+MA3:EMA(CLOSE,M3);'
+
+    };
+
+    return data;
+}
+
+
+JSIndexScript.prototype.EMA4=function()
+{
+    let data=
+    {
+        Name:'EMA', Description:'指数移动平均值', IsMainIndex:true, StringFormat:2,
+        Args:
+        [ 
+            { Name:'M1', Value:5}, { Name:'M2', Value:10 }, { Name:'M3', Value:20} , { Name:'M4', Value:60} 
+        ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" } ],
+        Script: //脚本
+'MA1:EMA(CLOSE,M1);\n\
+MA2:EMA(CLOSE,M2);\n\
+MA3:EMA(CLOSE,M3);\n\
+MA4:EMA(CLOSE,M4);'
+
+    };
+
+    return data;
+}
+
+
+JSIndexScript.prototype.EMA5=function()
+{
+    let data=
+    {
+        Name:'EMA', Description:'指数移动平均值', IsMainIndex:true, StringFormat:2,
+        Args:
+        [ 
+            { Name:'M1', Value:5}, { Name:'M2', Value:10 }, { Name:'M3', Value:20} , { Name:'M4', Value:60} ,
+            { Name:'M5', Value:0}
+        ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },
+        {Name:'MA5',DynamicName:"MA{M5}" } ],
+        Script: //脚本
+'MA1:EMA(CLOSE,M1);\n\
+MA2:EMA(CLOSE,M2);\n\
+MA3:EMA(CLOSE,M3);\n\
+MA4:EMA(CLOSE,M4);\n\
+MA5:EMA(CLOSE,M5);'
+
+    };
+
+    return data;
+}
+
+
+JSIndexScript.prototype.EMA6=function()
+{
+    let data=
+    {
+        Name:'EMA', Description:'指数移动平均值', IsMainIndex:true, StringFormat:2,
+        Args:
+        [ 
+            { Name:'M1', Value:5}, { Name:'M2', Value:10 }, { Name:'M3', Value:20} , { Name:'M4', Value:60} ,
+            { Name:'M5', Value:0},{ Name:'M6', Value:0}
+        ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" },{Name:'MA3',DynamicName:"MA{M3}" },{Name:'MA4',DynamicName:"MA{M4}" },
+        {Name:'MA5',DynamicName:"MA{M5}" } ,{ Name:'MA6',DynamicName:"MA{M6}" } ],
+        Script: //脚本
+'MA1:EMA(CLOSE,M1);\n\
+MA2:EMA(CLOSE,M2);\n\
+MA3:EMA(CLOSE,M3);\n\
+MA4:EMA(CLOSE,M4);\n\
+MA5:EMA(CLOSE,M5);\n\
+MA6:EMA(CLOSE,M6);'
 
     };
 
@@ -236,6 +553,25 @@ MACD:(DIF-DEA)*2,COLORSTICK;'
     return data;
 }
 
+//上下柱子
+JSIndexScript.prototype.MACD2=function()
+{
+    let data=
+    {
+        Name:'MACD', Description:'平滑异同平均', IsMainIndex:false,
+        Args:[ { Name:'SHORT', Value:12}, { Name:'LONG', Value:26}, { Name:'MID', Value:9} ],
+        Script: //脚本
+'DIF2:=EMA(CLOSE,SHORT)-EMA(CLOSE,LONG);\n\
+DEA2:=EMA(DIF2,MID);\n\
+MACD:(DIF2-DEA2)*2,COLORSTICK,LINETHICK50;\n\
+DIF:DIF2;\n\
+DEA:DEA2;'
+
+    };
+
+    return data;
+}
+
 JSIndexScript.prototype.KDJ=function()
 {
     let data=
@@ -259,11 +595,29 @@ JSIndexScript.prototype.VOL=function()
     {
         Name: 'VOL', Description: '成交量', IsMainIndex: false, FloatPrecision: 0,
         Args:[ { Name:'M1', Value:5}, { Name:'M2', Value:10} ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" }],
         Script: //脚本
             'VOLUME:=VOL;\n\
-成交量:VOL,VOLSTICK;\n\
+VOL:VOL,VOLSTICK;\n\
 MA1:MA(VOLUME,M1);\n\
 MA2:MA(VOLUME,M2);'
+
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.VOL2=function()
+{
+    let data=
+    {
+        Name:'VOL', Description:'成交量', IsMainIndex:false,FloatPrecision:0,
+        Args:[ { Name:'M1', Value:5}, { Name:'M2', Value:10} ],
+        OutName:[ {Name:'MA1',DynamicName:"MA{M1}" },  {Name:'MA2',DynamicName:"MA{M2}" }],
+        Script: //脚本
+'VOL:VOL,VOLSTICK,STICKTYPE(1);\n\
+MA1:MA(VOL,M1);\n\
+MA2:MA(VOL,M2);'
 
     };
 
@@ -1174,7 +1528,7 @@ JSIndexScript.prototype.AMO = function ()
 {
     let data =
     {
-        Name: 'AMO', Description: '成交金额', IsMainIndex: false,
+        Name: 'AMO', Description: '成交金额', IsMainIndex: false, YAxis:{ FloatPrecision:0, StringFormat:2 }, StringFormat:2,
         Args: [{ Name: 'M1', Value: 5 }, { Name: 'M2', Value: 10 }],
         Script: //脚本
             'AMOW:AMOUNT/10000.0,VOLSTICK;\n\
@@ -1737,7 +2091,7 @@ JSIndexScript.prototype.SAR = function ()
         Name: 'SAR', Description: '抛物转向', IsMainIndex: true,
         Args: [{ Name: 'P', Value: 10 },{ Name: 'STEP', Value: 2 },{ Name: 'MAXP', Value: 20 }],
         Script: //脚本
-'S:SAR(P,STEP,MAXP),CIRCLEDOT;'
+'S:SAR(P,STEP,MAXP),UPDOWNDOT;'
 
     };
 
@@ -1765,6 +2119,19 @@ STICKLINE(VOL<MA(VOL,5)/2 AND V<V12/2,0,VOL,10,0),COLORBLUE;\n\
 STICKLINE(VOL>MA(VOL,5)*2 AND V>V34*3 AND C<REF(C,1)*1.05 AND CROSS(C,C6) AND V>V5*1.2 AND V>V12*1.2 AND ZZ>2 AND C>H*0.975,VOL*0.5,0,10,0),COLORRED;\n\
 STICKLINE(VOL>MA(VOL,5)*2 AND V>V34*3 AND C<REF(C,1)*1.05 AND CROSS(C6,C) AND V>V5*1.2 AND V>V12*1.2,VOL*0.5,0,10,0),COLORRED;'
 
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.VOLRate = function () 
+{
+    let data =
+    {
+        Name: '量比', Description: '量比', IsMainIndex: false, Condition: { Period: [CONDITION_PERIOD.MINUTE_ID, CONDITION_PERIOD.MULTIDAY_MINUTE_ID] },
+        Args: [],
+        Script: //脚本
+            "LIANGBI:VOLR;"
     };
 
     return data;
@@ -1930,7 +2297,7 @@ JSIndexScript.prototype.EMPTY = function ()
 {
     let data =
     {
-        Name: '', Description: '空指标', IsMainIndex: false,
+        Name: '', Description: '空指标', IsMainIndex: true,
         Args: [],
         Script: //脚本
             'VAR2:=C;'
@@ -2853,290 +3220,262 @@ JSIndexScript.prototype.TEST = function ()
 {
     let data =
         {
-            Name: 'TEST', Description: '测试脚本', IsMainIndex: false,
-            Args: [{ Name: 'N', Value: 10 }],
+            Name: 'TEST', Description: '测试脚本', IsMainIndex: true,
+            Args: [{ Name: 'M1', Value: 5 },{ Name: 'M2', Value: 10 },{ Name: 'M3', Value: 15 }],
+            
             Script: //脚本
-                'VAR2:PERIOD;'
+                //"T2:KDJ.J;"+
+                "收盘价:C;成交量:VOL, SINGLELINE, RGB(100,100,100);"
+                //"T2:IF(KDJ.J>-10,KDJ.J#WEEK,0);"
+                
+
+                /*
+            Script:'收:=C("000001.SH");' +
+            '开:=O("000001.SH");\n' +
+            '低:=L("000001.SH");'+
+            '高:=H("000001.SH");'+
+            "DRAWKLINE(高,开,低,收), COLORYELLOW;"
+            */
+            
+            //"DRAWGBK_DIV(C>O,RGB(221 ,160 ,221),RGB(100 ,250, 250),1,1);"
+            /*
+            'TEXT:IF(PERIOD=5,"","不支持");\n'+
+           'DRAWTEXTREL(500,500,TEXT),FONTSIZE20;\n'+
+            'TESTSKIP(PERIOD!=5);\n'+
+            'T:C;\n'+
+            'T2:O;\n'
+            */
         };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index1 = function () 
+JSIndexScript.prototype.CJL = function () 
 {
     let data =
     {
-        Name: '资金吸筹', Description: '资金吸筹', IsMainIndex: false,
+        Name: 'CJL', Description: '期货持仓量', IsMainIndex: false,
         Args: [],
         Script: //脚本
-'VAR1:=REF((LOW+OPEN+CLOSE+HIGH)/4,1);  \n\
-VAR2:= SMA(ABS(LOW - VAR1), 13, 1) / SMA(MAX(LOW - VAR1, 0), 10, 1);\n\
-VAR3:= EMA(VAR2, 10);\n\
-VAR4:= LLV(LOW, 33);\n\
-VAR5:= EMA(IF(LOW <= VAR4, VAR3, 0), 3) * 0.2;\n\
-主力进场: IF(VAR5 > REF(VAR5, 1), VAR5,0), COLORRED, NODRAW;\n\
-洗盘: IF(VAR5 < REF(VAR5, 1), VAR5,0), COLORYELLOW, NODRAW;\n\
-STICKLINE(VAR5> REF(VAR5, 1),0, VAR5, 50, 0), COLORRED;\n\
-STICKLINE(VAR5 < REF(VAR5, 1), 0, VAR5, 50, 0), COLORYELLOW;'
+            "成交量:VOL,VOLSTICK;\n\
+持仓量:VOLINSTK,LINEOVERLAY;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index2 = function () 
+JSIndexScript.prototype.VOL_POSITION=function()
 {
     let data =
     {
-        Name: '牛熊区间', Description: '牛熊区间', IsMainIndex: false, YSpecificMaxMin: { Max: 100, Min: 1, Count: 4 }, YSplitScale: [1, 50, 100],
+        Name: '持仓量', Description: '持仓量', IsMainIndex: false,
         Args: [],
         Script: //脚本
-'短高H:=(20*H+19*REF(H,1)+18*REF(H,2)+17*REF(H,3)+16*REF(H,4)+15*REF(H,5)+14*REF(H,6)\n\
-+ 13 * REF(H, 7) + 12 * REF(H, 8) + 11 * REF(H, 9) + 10 * REF(H, 10) + 9 * REF(H, 11) + 8 * REF(H, 12)\n\
-+ 7 * REF(H, 13) + 6 * REF(H, 14) + 5 * REF(H, 15) + 4 * REF(H, 16) + 3 * REF(H, 17) + 2 * REF(H, 18) +\n\
-REF(H, 20))/ 210, COLORBLUE, LINETHICK1;\n\
-短低L:= (20 * L + 19 * REF(L, 1) + 18 * REF(L, 2) + 17 * REF(L, 3) + 16 * REF(L, 4) + 15 * REF(L, 5) + 14 * REF(L, 6)\n\
-+ 13 * REF(L, 7) + 12 * REF(L, 8) + 11 * REF(L, 9) + 10 * REF(L, 10) + 9 * REF(L, 11) + 8 * REF(L, 12)\n\
-+ 7 * REF(L, 13) + 6 * REF(L, 14) + 5 * REF(L, 15) + 4 * REF(L, 16) + 3 * REF(L, 17) + 2 * REF(L, 18) +\n\
-REF(L, 20)) / 210, COLORBLUE, LINETHICK1;\n\
-D90H:= EMA(短高H, 90), COLORRED, LINETHICK1;\n\
-D90L:= EMA(短低L, 90), COLORRED, LINETHICK1;\n\
-D90差:= D90H - D90L;\n\
-D90顶:= D90H + D90差 * 2, COLORRED, LINETHICK1;\n\
-D90底:= D90L - D90差 * 2, COLORRED, LINETHICK1;\n\
-高0:= (EMA(EMA(H, 25), 25) - EMA(EMA(L, 25), 25)) * 1 + EMA(EMA(H, 25), 25), LINETHICK1, COLORWHITE;\n\
-低0:= EMA(EMA(L, 25), 25) - (EMA(EMA(H, 25), 25) - EMA(EMA(L, 25), 25)) * 1, LINETHICK1, COLORWHITE;\n\
-多头定位:= 低0 >= D90底 AND 高0 >= D90顶;\n\
-空头定位:= 高0 <= D90顶 AND 低0 <= D90底;\n\
-震荡定位:= 低0 >= D90底 AND 高0 <= D90顶;\n\
-牛市: IF(多头定位 == 1, 100, 1), COLORRED, NODRAW;\n\
-熊市: IF(空头定位 == 1, 100, 1), COLORGREEN, NODRAW;\n\
-震荡: IF(震荡定位 == 1, 100, 1), COLORGRAY, NODRAW;\n\
-STICKLINE(多头定位 == 1, 100, 1, 100, 0), COLORRED;\n\
-STICKLINE(空头定位 == 1, 100, 1, 100, 0), COLORGREEN;\n\
-STICKLINE(震荡定位 == 1, 100, 1, 100, 0), COLORGRAY;'
+            "成交量:VOL,VOLSTICK;\n\
+持仓量:VOLINSTK,SINGLELINE;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index3 = function () 
+JSIndexScript.prototype.SQJZ = function () 
 {
     let data =
     {
-        Name: '持仓信号', Description: '持仓信号', IsMainIndex: true,
-        Args: [],
+        Name: 'SQJZ', Description: '神奇九转', IsMainIndex: true,
         Script: //脚本
-'买线:=EMA(C,2);\n\
-卖线:=EMA(SLOPE(C,30)*5+C,20); \n\
-BU:=CROSS(买线,卖线);\n\
-SEL:=CROSS(卖线,买线);\n\
-\n\
-STICKLINE(买线>=卖线 AND CLOSE>OPEN,LOW,HIGH,0,1),COLORRED;\n\
-STICKLINE(买线>=卖线 AND CLOSE<OPEN,LOW,HIGH,0,1),COLORRED;\n\
-STICKLINE(买线>=卖线 AND CLOSE>OPEN,CLOSE,OPEN,50,1),COLORRED;\n\
-STICKLINE(买线>=卖线 AND CLOSE<OPEN,CLOSE,OPEN,50,0),COLORRED;\n\
-STICKLINE(买线<卖线 AND CLOSE<OPEN,LOW,HIGH,0,1),COLORGREEN;\n\
-STICKLINE(买线<卖线 AND CLOSE>OPEN,LOW,HIGH,0,1),COLORGREEN;\n\
-STICKLINE(买线<卖线 AND CLOSE<OPEN,CLOSE,OPEN,50,0),COLORGREEN;\n\
-STICKLINE(买线<卖线 AND CLOSE>OPEN,CLOSE,OPEN,50,1),COLORGREEN;\n\
-\n\
-HHJSJDA:=(3*CLOSE+OPEN+LOW+HIGH)/6;\n\
-HHJSJDB:=(19*HHJSJDA+19*REF(HHJSJDA,1)+18*REF(HHJSJDA,2)+17*REF(HHJSJDA,3)+16*REF(HHJSJDA,4)+15*REF(HHJSJDA,5)+14*REF(HHJSJDA,6)\n\
-+13*REF(HHJSJDA,7)+12*REF(HHJSJDA,8)+11*REF(HHJSJDA,9)+10*REF(HHJSJDA,10)+9*REF(HHJSJDA,11)+8*REF(HHJSJDA,12)+7*REF(HHJSJDA,13)+6*REF(HHJSJDA,14)+5*REF(HHJSJDA,15)+4*REF(HHJSJDA,16)+3*REF(HHJSJDA,17)+2*REF\n\
-(HHJSJDA,20)+REF(HHJSJDA,19))/210,COLORYELLOW;\n\
-HHJSJDC:=MA(HHJSJDB,5),COLORRED;\n\
-快线:HHJSJDB,COLORYELLOW;\n\
-慢线:HHJSJDC,COLORRED;\n\
-\n\
-SVAR11:=HHV(HIGH,34);\n\
-SVAR14:=CLOSE-REF(CLOSE,1);\n\
-SVAR15:=MAX(SVAR14,0);\n\
-SVAR16:=ABS(SVAR14);\n\
-SVAR17:=SMA(SVAR15,7,1)/SMA(SVAR16,7,1)*100;\n\
-SVAR18:=SMA(SVAR15,13,1)/SMA(SVAR16,13,1)*100;\n\
-SVAR19:=BARSCOUNT(CLOSE);\n\
-SVAR20:=SMA(MAX(SVAR14,0),6,1)/SMA(ABS(SVAR14),6,1)*100;\n\
-SVAR21:=(-200)*(HHV(HIGH,60)-CLOSE)/(HHV(HIGH,60)-LLV(LOW,60))+100;\n\
-SVAR1A:=(CLOSE-LLV(LOW,15))/(HHV(HIGH,15)-LLV(LOW,15))*100;\n\
-SVAR1B:=SMA((SMA(SVAR1A,4,1)-50)*2,3,1);\n\
-SVAR1C:=(INDEXC-LLV(INDEXL,14))/(HHV(INDEXH,14)-LLV(INDEXL,14))*100;\n\
-SVAR1D:=SMA(SVAR1C,4,1);\n\
-SVAR1E:=SMA(SVAR1D,3,1);\n\
-SVAR1F:=(HHV(HIGH,30)-CLOSE)/CLOSE*100;\n\
-SVAR22:=SVAR20<=25 AND SVAR21<-95 AND SVAR1F>20 AND SVAR1B<-30 AND SVAR1E<30 AND SVAR11-CLOSE>=-0.25 AND SVAR17<22 AND SVAR18<28 AND SVAR19>50;\n\
-BUY3:=CROSS(SVAR22,0.5) AND COUNT(SVAR22==1,10)==1;\n\
-\n\
-SVARF:=LOW*0.9;\n\
-SVAR10X:=100-3*SMA((OPEN-LLV(LOW,75))/(HHV(HIGH,75)-LLV(LOW,75))*100,20,1)+2*SMA(SMA((OPEN-LLV(LOW,75))/(HHV(HIGH,75)-LLV(LOW,75))*100,20,1),15,1);\n\
-SVAR11X:=SVARF<REF(SVAR10X,1) AND VOL>REF(VOL,1) AND CLOSE>REF(CLOSE,1);\n\
-BUY2:=SVAR11X AND COUNT(SVAR11X,30)==1;\n\
-\n\
-VAR1:=(CLOSE+HIGH+LOW+OPEN)/4;\n\
-VAR2:=SUMBARS(VOL,CAPITAL);\n\
-VAR3:=HHV(VAR1,VAR2);\n\
-VAR4:=LLV(VAR1,VAR2);\n\
-VAR5:=(2*VAR1-VAR4-REF(VAR4,1))/(VAR3-VAR4);\n\
-VAR6:=(VAR1-VAR4)/(VAR3-VAR4);\n\
-VAR7:=IF(VAR1<=VAR4,VAR5*60,VAR6*60);\n\
-VAR8:=600*(EMA(CLOSE,3)-EMA(LOW,30))/EMA(LOW,30);\n\
-VAR9:=EMA(VAR8,7);\n\
-VARC:=HHV(HIGH,9)-LLV(LOW,9);\n\
-VARD:=HHV(HIGH,9)-CLOSE;\n\
-VARE:=CLOSE-LLV(LOW,9);\n\
-VARF:=VARD/VARC*100-70;\n\
-VAR10:=(CLOSE-LLV(LOW,60))/(HHV(HIGH,60)-LLV(LOW,60))*100;\n\
-VAR11:=(2*CLOSE+HIGH+LOW)/4;\n\
-VAR12:=SMA(VARE/VARC*100,3,1);\n\
-VAR13:=LLV(LOW,34);\n\
-VAR14:=SMA(VAR12,3,1)-SMA(VARF,9,1);\n\
-VAR15:=IF(VAR14>100,VAR14-100,0);\n\
-VAR16:=HHV(HIGH,34);\n\
-VAR17:=EMA((VAR11-VAR13)/(VAR16-VAR13)*100,8);\n\
-VAR18:=EMA(VAR17,5);\n\
-BUY:=STICKLINE(VAR17-VAR18>0,VAR17,VAR18,8,1),COLORRED;\n\
-SELL:=STICKLINE(VAR17-VAR18<0,VAR17,VAR18,8,1),COLORGREEN;\n\
-BUY1:=VAR17>VAR18 AND REF(VAR17,1)<REF(VAR18,1);\n\
-SELL1:=VAR17<VAR18 AND REF(VAR17,1)>REF(VAR18,1);\n\
-\n\
-短高H:=(20*H+19*REF(H,1)+18*REF(H,2)+17*REF(H,3)+16*REF(H,4)+15*REF(H,5)+14*REF(H,6)\n\
-+13*REF(H,7)+12*REF(H,8)+11*REF(H,9)+10*REF(H,10)+9*REF(H,11)+8*REF(H,12)\n\
-+7*REF(H,13)+6*REF(H,14)+5*REF(H,15)+4*REF(H,16)+3*REF(H,17)+2*REF(H,18)+\n\
-REF(H,20))/210,COLORBLUE,LINETHICK1;\n\
-短低L:=(20*L+19*REF(L,1)+18*REF(L,2)+17*REF(L,3)+16*REF(L,4)+15*REF(L,5)+14*REF(L,6)\n\
-+13*REF(L,7)+12*REF(L,8)+11*REF(L,9)+10*REF(L,10)+9*REF(L,11)+8*REF(L,12)\n\
-+7*REF(L,13)+6*REF(L,14)+5*REF(L,15)+4*REF(L,16)+3*REF(L,17)+2*REF(L,18)+\n\
-REF(L,20))/210,COLORBLUE,LINETHICK1;\n\
-D90H:=EMA(短高H,90),COLORRED,LINETHICK1;\n\
-D90L:=EMA(短低L,90),COLORRED,LINETHICK1;\n\
-D90差:=D90H-D90L;\n\
-D90顶:=D90H+D90差*2,COLORRED,LINETHICK1;\n\
-D90底:=D90L-D90差*2,COLORRED,LINETHICK1;\n\
-高0:=(EMA(EMA(H,25),25)-EMA(EMA(L,25),25))*1+EMA(EMA(H,25),25),LINETHICK1,COLORWHITE;\n\
-低0:=EMA(EMA(L,25),25)-(EMA(EMA(H,25),25)-EMA(EMA(L,25),25))*1,LINETHICK1,COLORWHITE;\n\
-多头定位:=低0>=D90底 AND 高0>=D90顶;\n\
-空头定位:=高0<=D90顶 AND 低0<=D90底;\n\
-震荡定位:=低0>=D90底 AND 高0<=D90顶;\n\
-\n\
-牛市:=多头定位==1;\n\
-熊市:=空头定位==1;\n\
-震荡:=震荡定位==1;\n\
-\n\
-非牛市:=熊市 OR 震荡;\n\
-非熊市:=牛市 OR 震荡;\n\
-\n\
-BUY11:=BUY1 AND 非熊市;\n\
-SELL11:=SELL1 AND 震荡定位==0;\n\
-\n\
-BUY111:=BUY11 AND COUNT(BUY11,10)<2;\n\
-BUY0:=BUY111 AND COUNT(BUY111,21)==1;\n\
-SELL111:=SELL11 AND COUNT(SELL11,10)<2;\n\
-SELL0:=SELL111 AND COUNT(SELL111,10)==1;\n\
-\n\
-XK1:=EMA(100*(CLOSE-LLV(LOW,34))/(HHV(HIGH,34)-LLV(LOW,34)),3)/4;\n\
-上穿:=REF(XK1,1)<5 AND XK1>=5;\n\
-BUY4:=上穿 AND COUNT(XK1<2,12)<1;\n\
-\n\
-SELL2:=REF(XK1,1)<=22.5 AND XK1>22.5 AND COUNT(REF(XK1,1)>=22.5 AND XK1<22.5,5)>0;\n\
-SELL3:=REF(XK1,1)>=21.5 AND XK1<21.5 AND COUNT(REF(XK1,1)>=22.5 AND XK1<22.5,12)>1;\n\
-SELL4:=SELL2 OR SELL3 AND COUNT((SELL2 OR SELL3)==1,5)==1;\n\
-\n\
-SUPERDRAWTEXT(BUY0,L,"机会",2,10),COLORRED;\n\
-SUPERDRAWTEXT(SELL0,H,"风险",1,10),COLORGREEN;\n\
-SUPERDRAWTEXT(BUY2,L,"机会",2,10),COLORRED;\n\
-SUPERDRAWTEXT(BUY4,L,"机会",2,10),COLORRED;\n\
-SUPERDRAWTEXT(SELL4,H,"风险",1,10),COLORGREEN;'
+"B:=C<REF(C,4);\n\
+N:=CURRBARSCOUNT;\n\
+B1:=(N=6 AND REFXV(COUNT(B,6),5)=6) OR (N=7 AND REFXV(COUNT(B,7),6)=7) OR (N=8 AND REFXV(COUNT(B,8),7)=8) OR (N>=9 AND REFXV(COUNT(B,9),8)=9);\n\
+DRAWNUMBER(B1 AND REF(B,1)=0,L,1),COLORMAGENTA;\n\
+B2:=(N=5 AND REFXV(COUNT(B,6),4)=6) OR (N=6 AND REFXV(COUNT(B,7),5)=7) OR (N=7 AND REFXV(COUNT(B,8),6)=8) OR (N>=8 AND REFXV(COUNT(B,9),7)=9);\n\
+DRAWNUMBER(B2 AND REF(B,2)=0,L,2),COLORMAGENTA;\n\
+B8:=(N=1 AND COUNT(B,8)=8) OR (N>=2 AND REFXV(COUNT(B,9),1)=9);\n\
+DRAWNUMBER(B8 AND REF(B,8)=0,L,8),COLORMAGENTA;\n\
+B9:=(N>=1 AND COUNT(B,9)=9);\n\
+DRAWNUMBER(B9 AND REF(B,9)=0,L,9),COLORBROWN;\n\
+S:=C>REF(C,4);\n\
+S1:=(N=6 AND REFXV(COUNT(S,6),5)=6) OR (N=7 AND REFXV(COUNT(S,7),6)=7) OR (N=8 AND REFXV(COUNT(S,8),7)=8) OR (N>=9 AND REFXV(COUNT(S,9),8)=9);\n\
+DRAWNUMBER(S1 AND REF(S,1)=0,H,1),COLORMAGENTA,DRAWABOVE;\n\
+S2:=(N=5 AND REFXV(COUNT(S,6),4)=6) OR (N=6 AND REFXV(COUNT(S,7),5)=7) OR (N=7 AND REFXV(COUNT(S,8),6)=8) OR (N>=8 AND REFXV(COUNT(S,9),7)=9);\n\
+DRAWNUMBER(S2 AND REF(S,2)=0,H,2),COLORMAGENTA,DRAWABOVE;\n\
+S8:=(N=1 AND COUNT(S,8)=8) OR (N>=2 AND REFXV(COUNT(S,9),1)=9);\n\
+DRAWNUMBER(S8 AND REF(S,8)=0,H,8),COLORMAGENTA,DRAWABOVE;\n\
+S9:=(N>=1 AND COUNT(S,9)=9);\n\
+DRAWNUMBER(S9 AND REF(S,9)=0,H,9),COLORGREEN,DRAWABOVE;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index4 = function () 
+JSIndexScript.prototype.XT = function () 
 {
     let data =
     {
-        Name: '股东实际增减持', Description: '股东实际增减持', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
+        Name: 'XT', Description: '箱体', IsMainIndex: true,
+        Args: [{ Name: 'N', Value: 10 }],
         Script: //脚本
-'增持:NEWS(4),NODRAW,COLORRED;\n\
-减持:NEWS(5),NODRAW,COLORGREEN;\n\
-STICKLINE(增持>0,0,增持,1,0),COLORRED;\n\
-STICKLINE(减持<0,0,减持,1,0),COLORGREEN;'
+"【箱顶】:PEAK(CLOSE,N,1)*0.98;\n\
+【箱底】:TROUGH(CLOSE,N,1)*1.02;\n\
+【箱高】:100*(【箱顶】-【箱底】)/【箱底】,NODRAW;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index5 = function () 
+JSIndexScript.prototype.CFJT = function () 
 {
     let data =
     {
-        Name: '大宗交易', Description: '大宗交易', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
+        Name: 'CFJT', Description: '财富阶梯', IsMainIndex: true,
         Script: //脚本
-            '交易次数:NEWS(7);'
+"突破:=REF(EMA(C,14),1);\n\
+A1X:=(EMA(C,10)-突破)/突破*100;\n\
+多方:=IF(A1X>=0,REF(EMA(C,10),BARSLAST(CROSS(A1X,0))+1),DRAWNULL);\n\
+空方:=IF(A1X<0,REF(EMA(C,10),BARSLAST(CROSS(0,A1X))+1),DRAWNULL);\n\
+STICKLINE(A1X>=0,多方,突破,110,0),COLORRED;\n\
+STICKLINE(A1X<0,空方,突破,110,0),COLORGREEN;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index6 = function () 
+JSIndexScript.prototype.CYX = function () 
 {
     let data =
     {
-        Name: '信托持股', Description: '信托持股', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
+        Name: 'CYX', Description: '撑压线', IsMainIndex: true,
+        Args: [{ Name: 'N', Value: 7 }],
         Script: //脚本
-            '家数:NEWS(6);'
+"Z1:=STRCAT(HYBLOCK,' ');\n\
+Z2:=STRCAT(Z1,DYBLOCK);\n\
+Z3:=STRCAT(Z2,' ');\n\
+DRAWTEXT_FIX(ISLASTBAR,0,0,0,STRCAT(Z3,GNBLOCK)),COLOR00C0C0;\n\
+A1:=REF(H,N)=HHV(H,2*N+1);\n\
+B1:=FILTER(A1,N);\n\
+C1:=BACKSET(B1,N+1);\n\
+D1:=FILTER(C1,N);\n\
+A2:=REF(L,N)=LLV(L,2*N+1);\n\
+B2:=FILTER(A2,N);\n\
+C2:=BACKSET(B2,N+1);\n\
+D2:=FILTER(C2,N);\n\
+E1:=(REF(LLV(L,2*N),1)+REF(HHV(H,2*N),1))/2;\n\
+E2:=(H+L)/2;\n\
+H1:=(D1 AND NOT(D2 AND E1>=E2)) OR ISLASTBAR OR BARSCOUNT(C)=1;\n\
+L1:=(D2 AND NOT(D1 AND E1<E2));\n\
+H2:=D1 AND NOT(D2 AND E1>=E2);\n\
+X1:=REF(BARSLAST(H1),1)+1;\n\
+F1:=BACKSET(H1 AND COUNT(L1,X1)>0,LLVBARS(IF(L1,L,10000),X1));\n\
+G1:=F1>REF(F1,1);\n\
+I1:=BACKSET(G1,2);\n\
+LD:=I1>REF(I1,1);\n\
+L2:=LD OR ISLASTBAR OR BARSCOUNT(C)=1;\n\
+X2:=REF(BARSLAST(L2),1)+1;\n\
+F2:=BACKSET(L2 AND COUNT(H2,X2)>0,HHVBARS(IF(H2,H,0),X2));\n\
+G2:=F2>REF(F2,1);\n\
+I2:=BACKSET(G2,2);\n\
+HD:=I2>REF(I2,1);\n\
+R1:=BACKSET(ISLASTBAR,BARSLAST(HD)+1);\n\
+S1:=R1>REF(R1,1);\n\
+T1:=BACKSET(ISLASTBAR,BARSLAST(LD)+1);\n\
+U1:=T1>REF(T1,1);\n\
+R2:=BACKSET(S1,REF(BARSLAST(HD),1)+2);\n\
+S2:=R2>REF(R2,1);\n\
+T2:=BACKSET(U1,REF(BARSLAST(LD),1)+2);\n\
+U2:=T2>REF(T2,1);\n\
+DRAWLINE(S2,H,S1,H,1),LINETHICK2,COLORRED;\n\
+DRAWLINE(U2,L,U1,L,1),LINETHICK2,COLORGREEN;"
     };
 
     return data;
 }
 
-JSIndexScript.prototype.Zealink_Index7 = function () {
-    let data =
-    {
-        Name: '官网新闻', Description: '官网新闻', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
-        Script: //脚本
-            '个数:NEWS(8);'
-    };
-
-    return data;
-}
-
-JSIndexScript.prototype.Zealink_Index8 = function () {
-    let data =
-    {
-        Name: '高管要闻', Description: '高管要闻', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
-        Script: //脚本
-            '个数:NEWS(9);'
-    };
-
-    return data;
-}
-
-JSIndexScript.prototype.Zealink_Index9 = function () 
+JSIndexScript.prototype.WAVE = function () 
 {
     let data =
     {
-        Name: '股权质押', Description: '股权质押', IsMainIndex: false, FloatPrecision: 0,
-        Args: [],
+        Name: 'WAVE', Description: '波浪分析', IsMainIndex: true,
+        Args: [{ Name: 'N', Value: 5 }],
         Script: //脚本
-            '次数:NEWS(10);'
+"ZIG(3,N);"
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.ZNZ_CBAND = function() 
+{
+    let data =
+    {
+        Name: 'ZNZ_CBAND', Description: '优化成本布林带宽', IsMainIndex: false,
+        Args: [{ Name: 'N', Value: 20 }],
+        Script: //脚本
+`A:=AMOUNT/(100*VOL);
+BBI1:=MA(A,N);
+UPR0:=BBI1+STD(A,N);
+DWN0:=BBI1-STD(A,N);
+UPR1:=BBI1+1.7*STD(A,N);
+DWN1:=BBI1-1.7*STD(A,N);
+优化成本布林带宽:100*1.7*STD(A,N);`
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.ZNZ_RPY2 = function() 
+{
+    let data =
+    {
+        Name: 'ZNZ_RPY2', Description: '两年相对价位', IsMainIndex: false,
+        Script: //脚本
+`A:=REF(HHV(CLOSE,480),1);
+B:=REF(LLV(CLOSE,480),1);
+100*(CLOSE-B)/(A-B);`
+    };
+
+    return data;
+}
+
+JSIndexScript.prototype.ZNZ_RPY1 = function() 
+{
+    let data =
+    {
+        Name: 'ZNZ_RPY1', Description: '年相对价位', IsMainIndex: false,
+        Args: [{ Name: 'N', Value: 240 }],
+        Script: //脚本
+`A:=REF(HHV(CLOSE,N),1);
+B:=REF(LLV(CLOSE,N),1);
+100*(CLOSE-B)/(A-B);`
     };
 
     return data;
 }
 
 
+///////////////////////////////////////////////////////////////////
+//导出
+var JSCommonIndexScript=
+{
+    JSIndexScript: JSIndexScript
+};
+
+export
+{
+    JSCommonIndexScript,
+    JSIndexScript
+};
+
+/*
 module.exports =
 {
     JSCommonIndexScript:
     {
         JSIndexScript: JSIndexScript
-    }
+    },
+
+    JSCommon_JSIndexScript:JSIndexScript,
 };
+*/
 
 
 

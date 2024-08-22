@@ -1,5 +1,5 @@
 <template>
-    <div class="stockkline" ref='stockkline'>
+    <div class="stockkline" ref='stockkline' :class='{blackStyle: isBlackStyle}'>
         <!-- 周期工具条  !-->
         <div class='periodbar' ref='divperiodbar'>
             <div class="preiod">
@@ -41,7 +41,7 @@
           
         </div>
         <div class="brushTool" v-if="DrawTool.IsShow">
-            <Stockdrawtool @CurrentIcon = "CurrentIcon" @IsShowBrushTool="isShowBrushTool" :topheight="topheight" :totalheight="totalheight"></Stockdrawtool>
+            <Stockdrawtool ref='stockdrawtool' @CurrentIcon = "CurrentIcon" @IsShowBrushTool="isShowBrushTool" :topheight="topheight" :totalheight="totalheight"></Stockdrawtool>
         </div>   
         <!-- 走势图 和 K线图  !-->
         <div class='divchart' :id='ID' ref='divchart' style="width:100%;height:100%">
@@ -113,26 +113,42 @@ DefaultData.GetMinuteOption=function()
 
         IsShowRightMenu: false,         //右键菜单
         IsShowCorssCursorInfo: true,    //是否显示十字光标的刻度信息
+        EnableSelectRect:true,
+
+        EnableZoomIndexWindow:true,
+        IsDrawPictureXY:true,
+        EnableNewIndex:true,
+
+        SelectedChart:{ EnableSelected: true, EnableMoveOn:true },
+        EnableIndexChartDrag:true,
 
         Border: //边框
         {
-            Left: 60, //左边间距
-            Right: 60, //右边间距
+            Left: 40, //左边间距
+            Right: 40, //右边间距
             Top: 25,
-            Bottom: 20
+            Bottom: 20,
+
+            AutoLeft:{ Blank:10, MinWidth:60 },
+            AutoRight:{ Blank:10, MinWidth:40 },
         },
 
-        KLineTitle: //标题设置
+        MinuteTitle: //标题设置
         {
-            
+            IsTitleShowLatestData:true,
         },
 
         Frame: //子框架设置,刻度小数位数设置
         [
             { SplitCount: 5, StringFormat: 0 },
-            { SplitCount: 3, StringFormat: 0 },
-            { SplitCount: 3, StringFormat: 0 }
+            { SplitCount: 5, StringFormat: 0 },
+            { SplitCount: 5, StringFormat: 0 }
         ],
+
+         ExtendChart:    //扩展图形
+        [
+            { Name:'MinutePCTooltip' }, //PC端tooltip
+        ]
     };
 
     return option;
@@ -145,22 +161,62 @@ DefaultData.GetKLineOption=function()
         Type: '历史K线图',
         Windows: 
         [
-            { Index: "均线" },
-            { Index: "VOL" },
+            { Index: "均线", Overlay:true, Export:true },
+            { Index: "VOL", Overlay:true },
         ], //窗口指标
         Symbol: null,
         IsAutoUpdate: true, //是自动更新数据
         IsShowRightMenu: false, //右键菜单
+
+        CorssCursorInfo:{ DateFormatType:2 },
+
+        EnableYDrag:{ Right:true },
+
+        DragDownload: { Day:{ Enable:true } , Minute:{ Enable:true }}, 
+
+        StepPixel:0,
+
+        EnableZoomIndexWindow:true,
+
+        SelectedChart:
+        { 
+            EnableSelected: true, 
+            EnableMoveOn:true 
+        },
+
+        EnableIndexChartDrag:true,
+
+         //区间选择
+        SelectRect:
+        {
+            SpaceReselected:true, //空格重选
+            ShowRangeText:
+            { 
+                Enable:true,    //是否显示区间选择范围日期
+                Position:1,     //日期显示位置 0=顶部 1=中间 2=底部
+                SubPosition:1   //子区域日期显示位置 0=顶部 1=中间 2=底部
+            }
+        },
 
         KLine: 
         {
             DragMode: 1, //拖拽模式 0 禁止拖拽 1 数据拖拽 2 区间选择
             Right: 1, //复权 0 不复权 1 前复权 2 后复权
             Period: 0, //周期 0 日线 1 周线 2 月线 3 年线
-            MaxReqeustDataCount: 1000, //日线数据最近1000天
+            MaxRequestDataCount: 3000, //日线数据最近1000天
             MaxRequestMinuteDayCount: 15,    //分钟数据最近15天
             PageSize: 50, //一屏显示多少数据 
-            IsShowTooltip: true //是否显示K线提示信息
+            IsShowTooltip: true, //是否显示K线提示信息
+            RightSpaceCount:2,  //右边预留2个K线宽度空白
+            ZoomType:1,         //PC页面版 缩放以十字光标为中心两边缩放
+            DataWidth:10,
+        },
+
+        IsDrawPictureXY:true,
+
+        SelectRect:
+        {
+            ShowRangeText:{ Enable:true, Position:1 }
         },
 
         KLineTitle: //标题设置
@@ -172,15 +228,34 @@ DefaultData.GetKLineOption=function()
         {
             Left: 1, //左边间距
             Right: 60, //右边间距
-            Top: 25
+            Top: 25,
+
+            AutoRight:{ Blank:10, MinWidth:60 }
         },
 
         Frame: //子框架设置
         [
-            { SplitCount: 3, StringFormat: 0, IsShowLeftText: false },
-            { SplitCount: 3, StringFormat: 0, IsShowLeftText: false },
-            { SplitCount: 3, StringFormat: 0, IsShowLeftText: false },
-            { SplitCount: 3, StringFormat: 0, IsShowLeftText: false }
+            { 
+                SplitCount: 5, StringFormat: 0, IsShowLeftText: false , 
+                Custom:
+                [
+                     { 
+                        Type:2,
+                        Position:'right',LineType:-1, 
+                    },
+                    { 
+                        Type:0,
+                        Position:'right',LineType:1,
+                    },
+                    { 
+                        Type:3,
+                        Position:'right',LineType:-1,
+                    }
+                ]
+            },
+            { SplitCount: 5, StringFormat: 0, IsShowLeftText: false ,EnableRemoveZero:true, MinYDistance:20, Custom:[ { Type:2,Position:'right',LineType:-1, } ] },
+            { SplitCount: 5, StringFormat: 0, IsShowLeftText: false ,EnableRemoveZero:true,Custom:[ { Type:2,Position:'right',LineType:-1, } ] },
+            { SplitCount: 5, StringFormat: 0, IsShowLeftText: false ,EnableRemoveZero:true,Custom:[ { Type:2,Position:'right',LineType:-1, } ] }
         ]
     };
 
@@ -196,6 +271,9 @@ DefaultData.GetPeriodData=function(name)
                     ["周线",{Value:1,KLineShow:true,MinuteShow:false}],
                     ["月线",{Value:2,KLineShow:true,MinuteShow:false}],
                     ["年线",{Value:3,KLineShow:true,MinuteShow:false}],
+                    ["双周",{Value:21,KLineShow:true,MinuteShow:false}],
+                    ["半年",{Value:22,KLineShow:true,MinuteShow:false}],
+                    ["分笔",{Value:10,KLineShow:true,MinuteShow:false}],
                     ["1分钟",{Value:4,KLineShow:true,MinuteShow:false}],
                     ["5分钟",{Value:5,KLineShow:true,MinuteShow:false}],
                     ["15分钟",{Value:6,KLineShow:true,MinuteShow:false}],
@@ -212,8 +290,9 @@ DefaultData.GetPeriodMenu=function()
     const data=
     [
         '分时', '五日', 
-        '日线', '周线', '月线', '年线', 
-        '1分钟', '5分钟', '15分钟', '30分钟', '60分钟'
+        '日线', '周线', '月线', '年线', "分笔",
+        '1分钟', '5分钟', '15分钟', '30分钟', '60分钟',
+        "双周",  "半年"
     ];
 
     return data;
@@ -325,7 +404,19 @@ DefaultData.GetKLineToolbar=function()
     {
         Text: '主图线型',
         Selected: [],
-        Menu: [{Name:"空心K线",Value:3}, {Name:"实心K线",Value:0}, {Name:"美国线",Value:2}, {Name:"收盘线",Value:1}],
+        Menu: 
+        [
+            {Name:"空心K线",Value:3}, 
+            {Name:"实心K线",Value:0}, 
+            {Name:"美国线",Value:2}, 
+            {Name:"收盘线",Value:1},
+            {Name:"面积图",Value:4},
+            {Name:"空心K线2",Value:6},
+            {Name:"Heikin Ashi",Value:11},
+            {Name:"Line Break",Value:12},
+            {Name:"High-low",Value:13},
+             {Name:"HLC Area",Value:15}
+        ],
         IsShow:true,
     };
 
@@ -459,11 +550,22 @@ export default
                 Timer:null  //定时器
             },
             MoveInterval:null,
-            IsShowBeforeData:true  //显示
+            IsShowBeforeData:true,  //显示
+
+            ColorStyle:new Map(),   //风格
+            isBlackStyle: false
         }
 
         return data;
     },
+
+    // watch: {
+    //   isBlackStyle: function(newValue){
+    //     if(newValue && this.DrawTool.IsShow){
+          
+    //     }
+    //   }
+    // },
 
     created:function()
     {
@@ -501,6 +603,16 @@ export default
         if (this.KLineOption) this.SetDefaultKLineOption(this.KLineOption);
         if (this.MinuteOption) this.SetDefaultMinuteOption(this.MinuteOption);
         if (this.TradeInfoTabWidth>0) this.TradeInfoTab.Width=this.TradeInfoTabWidth;
+
+        JSCommon.JSChart.GetResource().ToolbarButtonStyle=1;
+        //保存配色
+        var resource=JSCommon.HQChartStyle.GetStyleConfig(JSCommon.STYLE_TYPE_ID.WHITE_ID);
+        resource.ToolbarButtonStyle=1;
+        this.ColorStyle.set("white",resource);
+
+        resource=JSCommon.HQChartStyle.GetStyleConfig(JSCommon.STYLE_TYPE_ID.BLACK_ID);
+        resource.ToolbarButtonStyle=1;
+        this.ColorStyle.set("black",resource);
     },
 
     mounted:function()
@@ -649,9 +761,10 @@ export default
             if (this.Minute.JSChart) this.Minute.JSChart.OnSize();
 
             var divKline=this.$refs.kline;
+            //chartWidth=50000;
             divKline.style.width=chartWidth+'px';
             divKline.style.height=chartHeight+'px';
-            if (this.KLine.JSChart) this.KLine.JSChart.OnSize();
+            if (this.KLine.JSChart) this.KLine.JSChart.OnSize({Type:1});
 
             if (this.KLine.JSChart)
             {
@@ -702,7 +815,7 @@ export default
         {
             if (this.Minute.JSChart) return;
             this.Minute.Option.Symbol=this.Symbol;
-            let chart=JSCommon.JSChart.Init(this.$refs.minute);
+            let chart=JSCommon.JSChart.Init(this.$refs.minute, false, true);
             chart.SetOption(this.Minute.Option);
             this.Minute.JSChart=chart;
 
@@ -714,11 +827,16 @@ export default
         {
             if (!this.KLine.JSChart)    //不存在创建
             {
-                this.KLine.Option.Period=period;
+                this.KLine.Option.KLine.Period=period;
                 this.CreateKLineChart();
             }
             else
             {
+                if (period==10) //分笔图
+                {
+
+                }
+                
                 this.KLine.JSChart.ChangePeriod(period);
             }
         },
@@ -742,11 +860,61 @@ export default
         {
             if (this.KLine.JSChart) return;
             this.KLine.Option.Symbol=this.Symbol;
-            let chart=JSCommon.JSChart.Init(this.$refs.kline);
+            let chart=JSCommon.JSChart.Init(this.$refs.kline, false, true);
             chart.SetOption(this.KLine.Option);
             this.KLine.JSChart=chart;
+            this.KLine.JSChart.SetFocus();
+
+            this.KLine.JSChart.AddEventCallback(
+                {
+                    event:JSCommon.JSCHART_EVENT_ID.ON_CUSTOM_LEFT_TOOLBAR,
+                    callback:(event, data, chart)=>{ this.OnCustomLeftToolbar(event, data, chart);}
+                }
+            );
+
 
             this.UpdateIndexBarSelected();
+        },
+
+        OnCustomLeftToolbar(event, data, chart)
+        {
+            //console.log("[KLine::OnCustomLeftToolbar] data=",data);
+            var button =
+            {
+                ID: 128887,
+                Style:  //按钮样式 使用iconfont， 可以放全局的资源配置里面
+                {
+                    MoveOnColor: "rgb(0,0,255)",
+                    Color: "rgb(30,144,255)",
+                    Family: "iconfont",
+                    Text: "\ue691",
+                    Size: 13 *JSCommon.GetDevicePixelRatio(),
+                    MerginLeft: 2,
+                    YMoveOffset:-2,
+                },
+                TooltipText: "指标按钮开发中.....",
+            };
+
+            var button2 =
+            {
+                ID: 128888,
+                Style:  //按钮样式 使用iconfont， 可以放全局的资源配置里面
+                {
+                    MoveOnColor: "rgb(0,0,255)",
+                    Color: "rgb(30,144,255)",
+                    Family: "iconfont",
+                    Text: "\ue691",
+                    Size: 13 *JSCommon.GetDevicePixelRatio(),
+                    MerginLeft: 2,
+                    YMoveOffset:-2,
+                },
+                TooltipText: "叠加指标按钮开发中.....",
+            };
+
+            if (data.OverlayID) data.AryButton=[button2];
+            else data.AryButton=[button];
+
+            data.PreventDefault=true;
         },
 
         //走势图 K线图 周期切换
@@ -760,7 +928,7 @@ export default
             this.Minute.IsShow=period.MinuteShow;
         },
 
-        ChangeSymbol:function(symbol)
+        ChangeSymbol(symbol)
         {
             if (this.Symbol==symbol) return;
 
@@ -770,6 +938,28 @@ export default
 
             this.UpateMenuStatus();
             
+        },
+
+        //风格切换
+        ChangeStyle(styleName)
+        {   
+            this.isBlackStyle = 'black' === styleName;
+            var style=this.ColorStyle.get(styleName);
+            if (!style) return;
+
+            JSCommon.JSChart.SetStyle(style);  //设置全局颜色配置
+            this.$refs.kline.style.backgroundColor=style.BGColor;   //修改div背景色
+            if (this.KLine.JSChart) this.KLine.JSChart.ReloadResource({ Resource:null, Draw:true , Update:true });  //动态更新颜色配置
+            if (this.Minute.JSChart) this.Minute.JSChart.ReloadResource({ Resource:null, Draw:true , Update:true });  //动态更新颜色配置
+
+            //K线 div背景色
+            var clrBG="rgb(255,255,255)";
+            if (styleName=="black") clrBG="rgb(0,0,0)";
+            var divMinute=this.$refs.minute;
+            divMinute.style.backgroundColor=clrBG;
+
+            var divKline=this.$refs.kline;
+            divKline.style.backgroundColor=clrBG;
         },
 
         //更新菜单 
@@ -810,7 +1000,9 @@ export default
                 for(var i=0;i<2 && i<aryIndex.length;++i)
                 {
                     var item=aryIndex[i];
-                    var index=this.KLine.IndexBar.Menu.indexOf(item.ID);
+                    var index=-1;
+                    if (item.ID) index=this.KLine.IndexBar.Menu.indexOf(item.ID);
+                    else if (item.Name) index=this.KLine.IndexBar.Menu.indexOf(item.Name);
                     if (index>=0) this.KLine.IndexBar.Selected.push(index);
                 }
             }
@@ -1024,6 +1216,8 @@ export default
 
         ShowStockChip:function(isShow)
         {
+            if (!this.KLine.JSChart) return;
+
             var chart=this.KLine.JSChart.JSChartContainer;
             chart.StockChipWidth=this.TradeInfoTab.Width;   //设置移动筹码宽度
             var StockChip=chart.GetExtendChartByClassName('StockChip');
@@ -1196,6 +1390,11 @@ export default
                             //获取到工具的名称：线段
                             //this.KLine.JSChart.JSChartContainer.CreateChartDrawPicture('名称')
                             this.DrawTool.IsShow = true;
+                            this.$nextTick(() => {
+                              var styleName = this.isBlackStyle ? 'black': 'white';
+                              this.$refs.stockdrawtool.ChangeStyle(styleName);
+                            });
+                            
                         }
                         break;
                 }
@@ -1278,9 +1477,7 @@ export default
 </script>
 
 
-<style scoped lang="scss">
-
-$border: 1px solid #e1ecf2;
+<style scoped lang="less">
 
 * {
     font: 14px/normal "Microsoft Yahei";
@@ -1400,16 +1597,18 @@ a
     .divchart{
         position: relative;
         .bottomToolForChart{
-            width: 50%;
-            height: 80px;
+            width: 400px;
+            // width: 50%;
+            height: 60px;
             position: absolute;
-            bottom: 0;
-            left: 25%;
+            bottom: 20px;
+            left: 50%;
             display: flex;
             flex-direction: row;
             justify-content: center;
             align-items: center;
             z-index: 999;
+            transform: translateX(-50%);
             .iconBg{
                 width: 28px;
                 height: 28px;
@@ -1625,6 +1824,81 @@ a
     .iconfont {
         font-size: 13px;
     }
+}
+
+.blackStyle{
+  width: 100%;
+  .periodbar{
+    background-color: #2c3133;
+    .item{
+      color: #dde2e7;
+    }
+    .item.active{
+        color: #ffffff;
+        background-color: #ff8800;
+    }
+  }
+  .chartbar{
+    border-bottom: 1px solid #3d4042;
+    background-color: #191d1e;
+
+    .menuWrap .item {
+      .menuTwo{
+        border: 1px solid #191d20;
+        border-top: none;
+        background-color: #2f3438;
+
+        >li{
+          color: #dde2e7;
+          &:hover{
+            color: #ff8800;
+          }
+        }
+      }
+
+      .menuOne{
+        &:hover{
+          border-color: #191d20;
+          &>span,
+          &>.iconfont{
+            color: #ff8800;
+          }
+        }
+
+        &.light:hover,
+        &.light{
+          background-color: #2f3438;
+          border-color: #191d20;
+        }
+
+        &.light>span,
+        &.light>.iconfont{
+          color: #ff8800;
+        }
+
+        >span,
+        >.iconfont{
+          color: #dde2e7;
+        }
+      }
+    }
+    
+
+    
+  }
+
+  .indexbar{
+    background-color: #191d1e;
+
+    span{
+      color: #9ca7b3;
+
+      &.active{
+        color: #ff8800;
+        background-color: transparent;
+      }
+    }
+  }
 }
 
 </style>

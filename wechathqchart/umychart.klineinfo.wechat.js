@@ -1,11 +1,23 @@
-///////////////////////////////////////////////////////////
-//  小程序信息地雷数据
-//
-//
+/*
+    copyright (c) 2018 jones
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    开源项目 https://github.com/jones2000/HQChart
+
+    jones_2000@163.com
+
+    小程序信息地雷数据
+*/
 
 import {
-    JSCommonResource_Global_JSChartResource as g_JSChartResource,
-} from 'umychart.resource.wechat.js'
+    g_JSChartResource,
+} from './umychart.resource.wechat.js'
+
+import 
+{
+    IFrameSplitOperator,
+} from './umychart.framesplit.wechat.js'
 
 var KLINE_INFO_TYPE=
 {
@@ -61,15 +73,79 @@ JSKLineInfoMap.Get=function(id)
 
 function IKLineInfo()
 {
-    this.MaxReqeustDataCount=1000;
+    this.MaxRequestDataCount=1000;
     this.StartDate=20160101;
     this.Data;
+    this.ClassName='IKLineInfo';
+    this.Explain="IKLineInfo";
 
     this.GetToday=function()
     {
         var date=new Date();
         var today=date.getFullYear()*10000+(date.getMonth()+1)*100+date.getDate();
         return today;
+    }
+
+    this.GetRequestData=function(hqChart)
+    {
+        var obj=
+        { 
+            Symbol:hqChart.Symbol ,
+            MaxRequestDataCount: hqChart.MaxRequestDataCount,            //日线数据个数
+            MaxRequestMinuteDayCount:hqChart.MaxRequestMinuteDayCount,    //分钟数据请求的天数
+            Period:hqChart.Period       //周期
+        };
+
+        //K线数据范围
+        var hisData=null;
+        if (hqChart.ChartOperator_Temp_GetHistroyData)  hisData=hqChart.ChartOperator_Temp_GetHistroyData();
+        if (hisData)
+            obj.DateRange=hisData.GetDateRange();
+        
+        return obj;
+    }
+
+    this.NetworkFilter=function(hqChart,callInfo)
+    {
+        if (!hqChart.NetworkFilter) return false;
+
+        var self=this;
+
+        var param=
+        {
+            HQChart:hqChart,
+        };
+
+        var obj=
+        {
+            Name:`${this.ClassName}::RequestData`, //类名::函数
+            Explain:this.Explain,
+            Request:this.GetRequestData(hqChart), 
+            Self:this,
+            HQChart:hqChart,
+            CallInfo:callInfo,
+            PreventDefault:false
+        };
+
+        if (callInfo) 
+        {
+            if (callInfo.Update==true) 
+            {
+                obj.Update={ Start:{ Date: callInfo.StartDate } };
+                param.Update={ Start:{ Date: callInfo.StartDate } };
+            }
+
+            obj.CallFunctionName=callInfo.FunctionName; //内部调用函数名
+        }
+
+        hqChart.NetworkFilter(obj, function(data) 
+        { 
+            self.RecvData(data,param);
+        });
+
+        if (obj.PreventDefault==true) return true;   //已被上层替换,不调用默认的网络请求
+        
+        return false;
     }
 }
 
@@ -82,11 +158,16 @@ function InvestorInfo()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName="InvestorInfo";
+    this.Explain="互动易";
+
+    this.RequestData=function(hqChart, obj)
     {
         var self = this;
         var param={ HQChart:hqChart };
         this.Data=[];
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -97,7 +178,7 @@ function InvestorInfo()
                 "symbol": [param.HQChart.Symbol],
                 "querydate":{"StartDate":this.StartDate,"EndDate":this.GetToday()},
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -139,12 +220,25 @@ function AnnouncementInfo()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName='AnnouncementInfo';
+    this.Explain="公告";
+
+    this.RequestData=function(hqChart, obj)
     {
         var self = this;
         var param={ HQChart:hqChart };
-        this.Data=[];
 
+        if (obj && obj.Update===true)   //更新模式 不清内存数据
+        {
+
+        }
+        else
+        {
+            this.Data=[];
+        }
+
+        if (this.NetworkFilter(hqChart, obj)) return; //已被上层替换,不调用默认的网络请求
+        
         //请求数据
         wx.request({
             url: g_JSChartResource.Domain+g_JSChartResource.KLine.Info.Announcement.ApiUrl,
@@ -154,7 +248,7 @@ function AnnouncementInfo()
                 "symbol": [param.HQChart.Symbol],
                 "querydate":{"StartDate":this.StartDate,"EndDate":this.GetToday()},
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -217,11 +311,16 @@ function PforecastInfo()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName='PforecastInfo';
+    this.Explain='业绩预告';
+
+    this.RequestData=function(hqChart,obj)
     {
         var self = this;
         this.Data = [];
         var param={ HQChart:hqChart };
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -235,7 +334,7 @@ function PforecastInfo()
                 ],
                 "symbol": [param.HQChart.Symbol],
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -288,12 +387,17 @@ function ResearchInfo()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName='ResearchInfo';
+    this.Explain='投资者关系';
+
+    this.RequestData=function(hqChart,obj)
     {
         var self = this;
         var param= { HQChart:hqChart };
 
         this.Data=[];
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -304,7 +408,7 @@ function ResearchInfo()
                 "querydate":{"StartDate":this.StartDate,"EndDate":this.GetToday()},
                 "symbol": [param.HQChart.Symbol],
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -349,11 +453,16 @@ function BlockTrading()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName='BlockTrading';
+    this.Explain='大宗交易';
+
+    this.RequestData=function(hqChart,obj)
     {
         var self = this;
         var param={ HQChart:hqChart,};
         this.Data=[];
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -368,7 +477,7 @@ function BlockTrading()
                 ],
                 "symbol": [param.HQChart.Symbol],
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -426,12 +535,17 @@ function TradeDetail()
     this.newMethod();
     delete this.newMethod;
 
-    this.RequestData=function(hqChart)
+    this.ClassName='TradeDetail';
+    this.Explain='龙虎榜';
+
+    this.RequestData=function(hqChart,obj)
     {
         var self = this;
         var param={ HQChart:hqChart };
 
         this.Data=[];
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -446,7 +560,7 @@ function TradeDetail()
                 ],
                 "symbol": [param.HQChart.Symbol],
                 "start":0,
-                "end":this.MaxReqeustDataCount,
+                "end":this.MaxRequestDataCount,
             },
             method:"post",
             dataType: "json",
@@ -502,6 +616,8 @@ function PolicyInfo()
     this.newMethod();
     delete this.newMethod;
 
+    this.ClassName='PolicyInfo';
+    this.Explain='策略信息';
     this.PolicyList = []; //筛选的策略名字 {Name:策略名, Guid:策略的GUID}
 
     this.SetPolicyList=function(aryPolicy)
@@ -512,13 +628,15 @@ function PolicyInfo()
         }
     }
 
-    this.RequestData = function (hqChart) 
+    this.RequestData = function (hqChart,obj) 
     {
         var self = this;
         this.Data = [];
         var param = { HQChart: hqChart };
 
         // setTimeout(function () { self.RecvData(null, param); }, 2000); //模拟数据到达
+
+        if (this.NetworkFilter(hqChart,obj)) return; //已被上层替换,不调用默认的网络请求
 
         //请求数据
         wx.request({
@@ -529,7 +647,7 @@ function PolicyInfo()
             "condition": [
               { "item": ["date", "int32", "gte", this.StartDate, "lte", this.GetToday()] }],
             "start": 0,
-            "end": this.MaxReqeustDataCount
+            "end": this.MaxRequestDataCount
           },
           method: "post",
           dataType: "json",
@@ -667,9 +785,23 @@ function MarketEventInfo()
             for (var j in event.data) 
             {
                 var item = event.data[j];
-                if (item.length < 2) continue;
-                var info = { Date: event.date, Time: item[0], Title: item[1], Type: 0 };
-                this.Data.push(info);
+                if (Array.isArray(item))
+                {
+                    if (item.length < 2) continue;
+                    var info = { Date: event.date, Time: item[0], Title: item[1], Type: 0 };
+                    this.Data.push(info);
+                }
+                else    //2.0 格式
+                {
+                    if (!IFrameSplitOperator.IsNumber(item.Date) || !IFrameSplitOperator.IsNumber(item.Time) || !item.Title) continue;
+                    var info={ Date:item.Date, Time:item.Time, Title:item.Title, Type:0 };
+                    if (item.Color) info.Color=item.Color;
+                    if (item.BGColor) info.BGColor=item.BGColor;
+                    if (IFrameSplitOperator.IsNumber(item.Price)) info.Price=item.Price;
+                    if (item.Content) info.Content=item.Content;
+                    if (item.Link) info.Link=item.Link;
+                    this.Data.push(info);
+                }
             }
         }
 
@@ -679,6 +811,14 @@ function MarketEventInfo()
 }
 
 //导出统一使用JSCommon命名空间名
+export
+{
+    JSKLineInfoMap,
+    KLINE_INFO_TYPE,
+    JSMinuteInfoMap,
+};
+
+/*
 module.exports =
 {
     JSCommonKLineInfo:
@@ -693,3 +833,4 @@ module.exports =
     JSCommon_KLINE_INFO_TYPE: KLINE_INFO_TYPE,
     JSCommon_JSMinuteInfoMap: JSMinuteInfoMap,
 };
+*/

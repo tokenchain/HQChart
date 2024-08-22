@@ -1,4 +1,11 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
+
 
 ######################################################################################
 #
@@ -65,7 +72,11 @@ class JSExecute :
             'SETCODE':None  
         }  
 
-        self.SymbolData=JSSymbolData(ast=ast,option=option, procThrow=self.ThrowUnexpectedNode)
+        # 创建外部的数据类SymbolData, ProcCreateSymbolData 创建类函数
+        if option and option.ProcCreateSymbolData:
+            self.SymbolData=option.ProcCreateSymbolData(ast=ast,option=option, procThrow=self.ThrowUnexpectedNode)
+        else :
+            self.SymbolData=JSSymbolData(ast=ast,option=option, procThrow=self.ThrowUnexpectedNode)
         self.Algorithm=JSAlgorithm(errorHandler=self.ErrorHandler,symbolData=self.SymbolData)
         self.Draw=JSDraw(errorHandler=self.ErrorHandler,symbolData=self.SymbolData)
         
@@ -73,7 +84,8 @@ class JSExecute :
 
         if option and option.Arguments:
              self.Arguments=option.Arguments
-
+        
+          
     def Execute(self) :
         self.SymbolData.RunDownloadJob(self.JobList) # 准备数据
         outVar=self.RunAST()
@@ -88,8 +100,7 @@ class JSExecute :
         elif name in ('INDEXA','INDEXC','INDEXH','INDEXO','INDEXV','INDEXL','INDEXADV','INDEXDEC') : # 大盘数据
            return self.SymbolData.GetIndexCacheData(name)
         elif name== 'CURRBARSCOUNT':
-            pass
-            # return self.SymbolData.GetCurrBarsCount()
+            return self.SymbolData.GetCurrBarsCount()
         elif name== 'CAPITAL':
             return self.SymbolData.GetFinanceCacheData(JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_CAPITAL_DATA, node=node)
         elif name== 'EXCHANGE':
@@ -126,7 +137,7 @@ class JSExecute :
 
     # 单数据转成数组 个数和历史数据一致
     def SingleDataToArrayData(self,value) :
-        count=len(self.SymbolData.Data.Data)
+        count=self.SymbolData.Data.GetCount()
         result=[value]*count
         return result
 
@@ -405,6 +416,12 @@ class JSExecute :
             value=right.Value
         elif right.Type==Syntax.Identifier : # 右值是变量
             value=self.ReadVariable(right.Name,right)
+        elif right.Type==Syntax.UnaryExpression: # 带符号常量
+            if (right.Operator=="-") :
+                tempValue=self.GetNodeValue(right.Argument)
+                value=self.Algorithm.Subtract(0,tempValue)
+            else :
+                value=right.Argument.Value
 
         # console.log('[JSExecute::VisitAssignmentExpression]' , varName, ' = ',value);
         self.VarTable[varName]=value
@@ -446,7 +463,7 @@ class JSExecute :
                         value.Out=self.Algorithm.LT(leftValue,rightValue)
                     elif value.Operator== '<=':
                         value.Out=self.Algorithm.LTE(leftValue,rightValue)
-                    elif value.Operator== '==':
+                    elif value.Operator in ('=','=='):
                         value.Out=self.Algorithm.EQ(leftValue,rightValue)
                     elif value.Operator in ('!=','<>') :
                         value.Out=self.Algorithm.NEQ(leftValue,rightValue)
