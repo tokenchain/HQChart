@@ -1,14 +1,27 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
 
 import sys
 import math
 
 class JSComplierHelper:
 
+    # 无效数值
+    NoneNumber=float('nan')
+
     # 公共帮助方法
     @staticmethod
     def IsNumber(value):
-        return isinstance(value,(int,float))
+        if not isinstance(value,(int,float)) :
+            return False
+        if (math.isnan(value)):
+            return False
+        return True
 
     @staticmethod
     def IsJsonNumber(jsData,name):
@@ -25,7 +38,9 @@ class JSComplierHelper:
 
     @staticmethod
     def IsDivideNumber(value):
-        return isinstance(value,(int,float)) and value!=0
+        if (not JSComplierHelper.IsNumber(value)):
+            return False
+        return value!=0
 
     @staticmethod
     def IsJsonDivideNumber(jsData,name):
@@ -51,10 +66,14 @@ class JSComplierHelper:
     # For people stuck with python <= 2.5. Nan != Nan did not work reliably. Used numpy instead." Having said that, I've not actually ever seen it fail
     @staticmethod
     def IsNaN(value) :
-        return not isinstance(value,(int,float))
+        if (not isinstance(value,(int,float))):
+            return True
+        if (math.isnan(value)) :
+            return True
+        return False
 
     @staticmethod
-    def CreateArray(count, value=None) :
+    def CreateArray(count, value=NoneNumber) :
         if count<=0 :
             return []
         else :
@@ -130,7 +149,7 @@ class JSComplierHelper:
         for lineItem in lineData :
             result[lineItem.ID]=lineItem.Value
 
-        if thridData.ID==data.length-1:   # 最后一组数据
+        if thridData.ID==len(data)-1:   # 最后一组数据
             # 最后2个点的数据连成线
             lineCache=Variant()
             lineCache.Start, lineCache.End = Variant(), Variant()

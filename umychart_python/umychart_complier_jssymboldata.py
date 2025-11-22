@@ -1,4 +1,11 @@
-# 开源项目 https://github.com/jones2000/HQChart
+#   Copyright (c) 2018 jones
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#   开源项目 https://github.com/jones2000/HQChart
+#
+#   jones_2000@163.com
+
 
 #####################################################################
 #
@@ -124,7 +131,7 @@ class JSSymbolData() :
                             JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_AL_RATIO_DATA,JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_PROFIT_YOY_DATA,
                             JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_DIVIDEND_YIELD_DATA
                             ) :
-                self.GetFinanceData(job.ID) 
+                self.GetFinanceData(job.ID, job) 
             elif job.ID==JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_SYMBOL_LATEST_DATA : # 最新行情数据
                 self.GetLatestData()
             elif job.ID in  (JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_MARGIN_BALANCE,
@@ -359,9 +366,9 @@ class JSSymbolData() :
             return self.Data.GetOpen()
         elif dataName in ('HIGH', 'H') :
             return self.Data.GetHigh()
-        elif dataName in ('LOW', 'AMOUNT') :
+        elif dataName in ('LOW',"L") :
             return self.Data.GetLow()
-        elif dataName in ('AMOUNT') :
+        elif dataName in ('AMOUNT',"AMO") :
             return self.Data.GetAmount()
 
 
@@ -453,8 +460,9 @@ class JSSymbolData() :
             return self.IndexData.GetDown()
 
     # 下载财务数据
-    def GetFinanceData(self, jobID) :
-        if jobID in self.FinanceData :
+    def GetFinanceData(self, jobID, job) :
+        key=int(job.Args[0].Value)
+        if key in self.FinanceData :
             return
 
         print('[JSSymbolData::GetFinanceData] jobID=', jobID)
@@ -496,7 +504,7 @@ class JSSymbolData() :
         print('[JSSymbolData::GetFinanceData]  ',url, postData)
         response=requests.post(url,postData)
         jsonData=response.json()
-        self.RecvStockDayData(jsonData,jobID)
+        self.RecvStockDayData(jsonData,jobID, key)
 
     @staticmethod # 财务数据格式转换
     def JsonDataToFinance(data) :
@@ -542,7 +550,7 @@ class JSSymbolData() :
         
 
     # 把历史json数据转换为内存数据
-    def RecvStockDayData(self, recvData,jobID) :
+    def RecvStockDayData(self, recvData, jobID, key) :
         stocks=recvData['stock']
         if not stocks or  len(stocks)!=1 :
             return
@@ -560,21 +568,21 @@ class JSSymbolData() :
                 capitalData=item['capital']
                 if not capitalData or not JSComplierHelper.IsJsonNumber(capitalData,'a'):
                     continue
-                indexData.Value=capitalData['a']/100    # 流通股本（手）
+                indexData.Value=capitalData['a']/100    # 流通股本 手
                 bFinanceData=True
 
             elif jobID==JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_TOTAL_EQUITY_DATA:
                 capitalData=item['capital']
                 if not capitalData or not JSComplierHelper.IsJsonNumber(capitalData,'total'):
                     continue
-                indexData.Value=capitalData['total']/10000 #总股本（万股）
+                indexData.Value=capitalData['total'] #总股本 股
                 bFinanceData=True
 
             elif jobID==JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_FLOW_EQUITY_DATA: 
                     capitalData=item['capital']
                     if not capitalData or not JSComplierHelper.IsJsonNumber(capitalData,'a'):
                         continue
-                    indexData.Value=capitalData['a']/10000 # 流通股本（万股）
+                    indexData.Value=capitalData['a'] # 流通股本 股
                     bFinanceData=True
 
             elif jobID==JS_EXECUTE_JOB_ID.JOB_DOWNLOAD_FLOW_MARKETVALUE_DATA:   #流通市值
@@ -683,17 +691,14 @@ class JSSymbolData() :
                     bindData.Data[i].Value=1
 
         data=bindData.GetValue()
-        self.FinanceData[jobID]=data
+        self.FinanceData[key]=data
 
 
     # 财务函数
     def GetFinanceCacheData(self, id, node) :
-        jobID=JS_EXECUTE_JOB_ID.GetFinnanceJobID(id)
-        if not jobID :
-            self.ThrowUnexpectedNode(node,'不支持FINANCE('+str(int(id))+')')
-
-        if jobID in self.FinanceData :
-            return self.FinanceData.get(jobID)
+        key=int(id)
+        if key in self.FinanceData :
+            return self.FinanceData.get(key)
 
         return []
 
@@ -726,10 +731,10 @@ class JSSymbolData() :
         item.Time=stock['time']
         item.YClose=stock['yclose']
         item.Price=stock['price']
-        item.Open:stock['open'] 
-        item.High:stock['high'] 
-        item.Low:stock['low'] 
-        item.Vol:stock['vol']
+        item.Open=stock['open'] 
+        item.High=stock['high'] 
+        item.Low=stock['low'] 
+        item.Vol=stock['vol']
         item.Amount=stock['amount']
         item.Increase=stock['increase']
         item.Exchangerate=stock['exchangerate']
@@ -1218,3 +1223,16 @@ class JSSymbolData() :
         # Period周期 0=日线 1=周线 2=月线 3=年线 4=1分钟 5=5分钟 6=15分钟 7=30分钟 8=60分钟
         PERIOD_MAP=[5,6,7,11, 0,1,2,3,4,5]
         return PERIOD_MAP[self.Period]
+
+    def GetCurrBarsCount(self):
+        if (not self.Data):
+            return []
+        lCount=self.Data.GetCount()
+        if (lCount<=0):
+            return []
+
+        result=[]
+        for i in range(lCount-1, -1, -1):
+            result.append(i+1) #数据从1开始
+
+        return result

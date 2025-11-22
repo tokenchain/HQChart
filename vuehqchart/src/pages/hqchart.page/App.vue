@@ -1,12 +1,12 @@
 <template>
     <div id="app2" >
-        <div style="height:300px; width:500px;">
+        <div style="height:300px; width:100%;">
             <StockChart ref='hqchart' DefaultSymbol='000001.sz' :DefaultOption=this.Option />
         </div>
-        <div style="height:300px; width:500px;">
+        <div style="height:300px; width:80%;">
             <StockChart ref='hqchart2' DefaultSymbol='000001.sz' :DefaultOption=this.Option2 />
         </div>
-        <div style="height:300px; width:500px;">
+        <div style="height:300px; width:70%;">
             <StockChart ref='hqchart3' DefaultSymbol='000001.sz' :DefaultOption=this.Option3 />
         </div>
          <div style="height:300px; width:500px;">
@@ -30,7 +30,13 @@ export default
                 Windows:        //指定指标
                 [
                     //{ Index: "KDJ" }
-                ] 
+                ] ,
+                MinuteLine:
+                {
+                    //IsDrawAreaPrice:false,        //是否画价格面积图
+                    //IsShowLead:false,             //是否显示领先指标
+                    //SplitType:1,                  //0=默认值最大最小值 1=涨跌停作为最大最小值
+                },
             },
             Option2:
             {
@@ -60,11 +66,11 @@ export default
 
     created:function()
     {
-        
     },
 
     mounted:function()
     {
+        window.onresize = ()=> { this.OnSize() }
         this.OnSize();
     },
 
